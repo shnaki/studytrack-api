@@ -11,7 +11,8 @@
       "Bash(go vet:*)",
       "Bash(find:*)",
       "Bash(go run:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(go tool cover:*)"
     ]
   }
 }

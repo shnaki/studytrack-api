@@ -8,31 +8,6 @@ import (
 	"github.com/shnaki/studytrack-api/internal/usecase"
 )
 
-// --- Mock UserRepository ---
-
-type mockUserRepository struct {
-	users map[string]*domain.User
-}
-
-func newMockUserRepository() *mockUserRepository {
-	return &mockUserRepository{users: make(map[string]*domain.User)}
-}
-
-func (m *mockUserRepository) Create(_ context.Context, user *domain.User) error {
-	m.users[user.ID] = user
-	return nil
-}
-
-func (m *mockUserRepository) FindByID(_ context.Context, id string) (*domain.User, error) {
-	u, ok := m.users[id]
-	if !ok {
-		return nil, domain.ErrNotFound("user")
-	}
-	return u, nil
-}
-
-// --- Tests ---
-
 func TestCreateUser_Success(t *testing.T) {
 	repo := newMockUserRepository()
 	uc := usecase.NewUserUsecase(repo)

@@ -7,7 +7,7 @@
 - **言語**: Go 1.23+
 - **HTTP/OpenAPI**: [Huma v2](https://huma.rocks/)
 - **ルーター**: Chi v5
-- **DB**: PostgreSQL 16 + pgx v5
+- **DB**: PostgreSQL 18 + pgx v5
 - **マイグレーション**: golang-migrate
 - **アーキテクチャ**: DDD × Clean Architecture
 
@@ -37,7 +37,7 @@ db/
 ### 前提条件
 
 - Go 1.23+
-- PostgreSQL 16+ （またはDocker）
+- PostgreSQL 18+ （またはDocker）
 - [golang-migrate CLI](https://github.com/golang-migrate/migrate)（任意: Makefile経由でマイグレーション）
 
 ### 1. PostgreSQL起動

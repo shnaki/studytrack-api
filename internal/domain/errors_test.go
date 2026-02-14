@@ -96,9 +96,7 @@ func TestIsConflict_WithNonDomainError(t *testing.T) {
 
 func TestErrorsAs_WrappedError(t *testing.T) {
 	err := domain.ErrNotFound("user")
-	wrappedErr := errors.New("wrapped error: " + err.Error())
-	// fmt.Errorf("%w", err) 形式でラップしないと As は機能しない
-	wrappedErr = fmt.Errorf("wrapped: %w", err)
+	wrappedErr := fmt.Errorf("wrapped: %w", err)
 
 	if !domain.IsNotFound(wrappedErr) {
 		t.Error("expected IsNotFound to return true for wrapped ErrNotFound")

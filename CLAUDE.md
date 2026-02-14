@@ -16,13 +16,7 @@ DBは PostgreSQL を第一候補とし、DBアクセスは **pgx** と **sqlc** 
 
 依存は常に **外側 → 内側** に向かう。
 
-repository  
-↓  
-controller  
-↓  
-usecase  
-↓
-domain
+repository -> controller -> usecase -> domain
 
 ## レイヤ責務
 
@@ -30,14 +24,14 @@ domain
 
 エンティティ層は、ビジネスルールやオブジェクトの集合を表す。
 
-### 含むもの
+#### 含むもの
 
 - Entity
 - Value Object
 - Domain Service
 - Domain Error
 
-### 禁止
+#### 禁止
 
 - DBアクセス
 - HTTP依存
@@ -50,8 +44,7 @@ domain
 #### 含むもの
 
 - Usecase struct
-- Repository interface（port）
-- トランザクション境界（ユースケース単位）
+- Repository interface（`internal/usecase/port`）
 - ドメインルールの組み合わせ
 
 #### 禁止
@@ -67,7 +60,7 @@ HumaによるHTTP層。
 #### 含むもの
 
 - Huma handler
-- Request/Response DTO
+- Request/Response DTO (`internal/controller/dto`)
 - 入力バリデーション
 - エラー変換（domain/application → HTTP）
 
@@ -76,7 +69,7 @@ HumaによるHTTP層。
 - domain entity を直接返さない
 - DTO変換を明示する
 
-### repository
+### repository (postgres)
 
 外部I/Oの実装。
 
@@ -86,12 +79,11 @@ HumaによるHTTP層。
 - DB接続（pgx）
 - sqlc 生成コードの利用
 - 設定管理
-- Logger
 - マイグレーション適用
 
 #### 役割
 
-controller層のRepository interfaceを実装する。
+usecase層（port）のRepository interfaceを実装する。
 
 ## DB/Repository 実装方針（pgx + sqlc）
 
@@ -99,69 +91,60 @@ controller層のRepository interfaceを実装する。
 
 - PostgreSQL のドライバ/接続管理は **pgx** を使用する
 - クエリは SQL を明示的に書き、コード生成は **sqlc** に任せる
-- 生成コードは **infrastructure 層でのみ利用**し、domain/application に漏らさない
+- 生成コードは **repository 層でのみ利用**し、domain/usecase に漏らさない
 
 ### SQL配置ルール
 
-- `internal/infrastructure/db/query/*.sql` にクエリを置く（例）
-- `internal/infrastructure/db/migrations` にマイグレーションを置く（例）
-- `sqlc.yaml`（または `sqlc.json`）をルートに置く
+- `db/query/*.sql` にクエリを置く
+- `db/migrations/*.sql` にマイグレーションを置く
+- `sqlc.yaml` をルートに置く
 - `make sqlc` で生成できるようにする
 
 ### Repository 実装ルール
 
-- application層に `XxxRepository` の interface（port）を定義する
-- infrastructure層で `XxxRepository` を実装する
-- sqlc の生成型（Params/Row/Model）は **infrastructure 内に閉じ込める**
-  - application/domain に返す型は domain entity または application用の構造体に変換する
-- SQLのエラー（unique違反、not found 等）は infrastructure で吸収し、
-  domain/application のエラーに変換して返す
-
-## トランザクション方針（pgx）
-
-- 原則 usecase 単位でトランザクションを管理する
-- application層では Tx の開始/コミット/ロールバックを「抽象（port）」として扱えるようにする
-- infrastructure層で pgx の Tx（`pgx.Tx`）を利用して実装する
+- usecase層の `internal/usecase/port` に Repository interface を定義する
+- `internal/repository/postgres` で interface を実装する
+- sqlc の生成型（Params/Row/Model）は **repository 内に閉じ込める**
+    - usecase/domain に返す型は domain entity に変換する
+- SQLのエラー（unique違反、not found 等）は repository で吸収し、
+  domain のエラーに変換して返す
 
 ## エラーハンドリング規約
 
-## domain error
+### domain error
 
 domain内で定義する。
 
 例:
 
-- ErrSubjectNotFound
-- ErrInvalidStudyDuration
-
-### application error
-
-domain error をラップして返す。
+- `ErrNotFound`
+- `ErrInvalidArgument`
 
 ### HTTP error変換規則
 
-| domain/application error | HTTP |
-|--------------------------|------|
-| NotFound                 | 404  |
-| Validation               | 400  |
-| Conflict                 | 409  |
-| その他                   | 500  |
+`internal/controller/error.go` で変換を行う。
+
+| domain error | HTTP |
+|--------------|------|
+| NotFound     | 404  |
+| Invalid      | 400  |
+| Conflict     | 409  |
+| その他          | 500  |
 
 Humaのエラーレスポンス形式に統一する。
 
 ## DTO規約
 
-- Request/Responseは repository 層に定義
-- JSONタグは interface 層のみに置く
+- Request/Responseは `internal/controller/dto` に定義
+- JSONタグは DTO のみに置く
 - domain構造体にJSONタグを付けない
-- domainとDTOは明示的に変換関数を作る
+- domainとDTOは明示的に変換関数を作る（`ToXxxResponse` 等）
 
 ### Huma利用方針
 
-- ルーティングは Huma を使用
+- ルーティングは Huma を使用（`internal/controller/router.go`）
 - OpenAPIはHumaに自動生成させる
-- /openapi.json または /docs を公開
-- バリデーションはHumaの型定義を活用
+- バリデーションはHumaの型定義（struct tag）を活用
 
 ## テスト方針
 
@@ -183,12 +166,12 @@ Humaのエラーレスポンス形式に統一する。
 新しいAPIを追加する場合:
 
 1. domainに必要なEntity/ValueObjectを追加
-2. usecaseにUsecase追加
-3. repository interface定義（port）
-4. SQL追加（query/*.sql）→ `make sqlc` で生成
+2. usecaseの `port` に repository interface定義を追加
+3. usecaseにUsecase追加
+4. SQL追加（`db/query/*.sql`）→ `make sqlc` で生成
 5. repositoryにRepository実装（sqlc生成コード利用、型変換）
-6. controller(Huma)でDTOとhandler作成
-7. エラー変換追加
+6. controllerの `dto` に型定義を追加
+7. controller(Huma)でhandler作成し `router.go` で登録
 8. テスト追加
 
 この順序を守る。
@@ -198,22 +181,22 @@ Humaのエラーレスポンス形式に統一する。
 - 依存方向が壊れていないか必ず確認
 - domainに外部依存が入り込んでいないか確認
 - DTOとdomainが混ざっていないか確認
-- sqlc生成型がapplication/domainに漏れていないか確認
+- sqlc生成型がusecase/domainに漏れていないか確認
 
 ## コーディング規約
 
-- gofmt必須
-- golangci-lintを通す
-- 明確な命名（UserRepository など）
-- 曖昧なパッケージ名を避ける（util, commonは禁止）
+- `make fmt` 必須
+- `make lint` を通す
+- 明確な命名（`UserRepository` など）
+- 曖昧なパッケージ名を避ける（`util`, `common`は禁止）
 
 ## このプロジェクトでのアンチパターン
 
 - handlerから直接DB呼び出し
 - domainにjsonタグ
-- infrastructureからdomainを書き換える
+- repositoryからdomainを書き換える
 - usecaseを通さずrepository呼び出し
-- sqlc生成型をapplication/domainへ返す（漏らす）
+- sqlc生成型をusecase/domainへ返す（漏らす）
 
 ## 最重要原則
 

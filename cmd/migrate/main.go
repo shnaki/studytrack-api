@@ -1,3 +1,4 @@
+// Package main provides a migration tool.
 package main
 
 import (
@@ -74,7 +75,9 @@ func main() {
 		// The Makefile uses "down 1"
 		steps := 1
 		if len(remaining) > 1 {
-			fmt.Sscanf(remaining[1], "%d", &steps)
+			if _, err := fmt.Sscanf(remaining[1], "%d", &steps); err != nil {
+				log.Fatalf("invalid steps: %v", err)
+			}
 		}
 		if err := m.Steps(-steps); err != nil && err != migrate.ErrNoChange {
 			log.Fatal(err)
@@ -84,7 +87,9 @@ func main() {
 	case "create":
 		// Handle create command
 		// migrate create -ext sql -dir db/migrations -seq <name>
-		createCmd.Parse(os.Args[2:])
+		if err := createCmd.Parse(os.Args[2:]); err != nil {
+			log.Fatal(err)
+		}
 		args := createCmd.Args()
 		var name string
 		if len(args) == 0 {
@@ -163,7 +168,9 @@ func main() {
 			log.Fatal("version number is required for force command")
 		}
 		var v int
-		fmt.Sscanf(remaining[1], "%d", &v)
+		if _, err := fmt.Sscanf(remaining[1], "%d", &v); err != nil {
+			log.Fatalf("invalid version: %v", err)
+		}
 		m, err := migrate.New("file://"+path, database)
 		if err != nil {
 			log.Fatal(err)

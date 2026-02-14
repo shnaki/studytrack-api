@@ -1,3 +1,4 @@
+// Package controller contains HTTP handlers and routing logic.
 package controller
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/shnaki/studytrack-api/internal/usecase"
 )
 
+// Usecases holds all application usecases.
 type Usecases struct {
 	User     *usecase.UserUsecase
 	Subject  *usecase.SubjectUsecase
@@ -22,6 +24,7 @@ type Usecases struct {
 	Stats    *usecase.StatsUsecase
 }
 
+// NewRouter creates and configures the main HTTP router.
 func NewRouter(usecases *Usecases, corsOrigins []string, logger *slog.Logger) http.Handler {
 	router := chi.NewMux()
 

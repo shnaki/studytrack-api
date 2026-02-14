@@ -17,6 +17,7 @@ type userRepository struct {
 	q *sqlcgen.Queries
 }
 
+// NewUserRepository creates a new UserRepository implementation using PostgreSQL.
 func NewUserRepository(pool *pgxpool.Pool) port.UserRepository {
 	return &userRepository{q: sqlcgen.New(pool)}
 }

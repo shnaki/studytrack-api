@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// NewPool creates a new PostgreSQL connection pool.
 func NewPool(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(dbURL)
 	if err != nil {

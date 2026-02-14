@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// Subject represents a study subject.
 type Subject struct {
 	ID        string
 	UserID    string
@@ -10,6 +11,7 @@ type Subject struct {
 	UpdatedAt time.Time
 }
 
+// NewSubject creates a new Subject entity.
 func NewSubject(id, userID, name string) (*Subject, error) {
 	if err := validateSubjectName(name); err != nil {
 		return nil, err
@@ -27,6 +29,7 @@ func NewSubject(id, userID, name string) (*Subject, error) {
 	}, nil
 }
 
+// ReconstructSubject reconstructs a Subject entity from existing data.
 func ReconstructSubject(id, userID, name string, createdAt, updatedAt time.Time) *Subject {
 	return &Subject{
 		ID:        id,
@@ -37,6 +40,7 @@ func ReconstructSubject(id, userID, name string, createdAt, updatedAt time.Time)
 	}
 }
 
+// UpdateName updates the name of the subject.
 func (s *Subject) UpdateName(name string) error {
 	if err := validateSubjectName(name); err != nil {
 		return err

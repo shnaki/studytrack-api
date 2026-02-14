@@ -26,6 +26,7 @@ type getUserOutput struct {
 	Body dto.UserResponse
 }
 
+// RegisterUserRoutes registers user-related routes to the Huma API.
 func RegisterUserRoutes(api huma.API, uc *usecase.UserUsecase) {
 	huma.Register(api, huma.Operation{
 		OperationID:   "create-user",

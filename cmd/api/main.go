@@ -1,3 +1,4 @@
+// Package main provides the entry point for the API server.
 package main
 
 import (
@@ -17,6 +18,13 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		slog.Error("application error", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
@@ -27,16 +35,14 @@ func main() {
 	// Run migrations
 	logger.Info("running migrations")
 	if err := postgres.RunMigrations(cfg.DBURL, "db/migrations"); err != nil {
-		logger.Error("failed to run migrations", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	// Connect to DB
 	ctx := context.Background()
 	pool, err := postgres.NewPool(ctx, cfg.DBURL)
 	if err != nil {
-		logger.Error("failed to connect to database", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer pool.Close()
 	logger.Info("connected to database")
@@ -84,7 +90,8 @@ func main() {
 	logger.Info(fmt.Sprintf("server starting on :%s", cfg.Port))
 	logger.Info("OpenAPI docs available at /v1/docs")
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Error("server error", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("server error: %w", err)
 	}
+
+	return nil
 }

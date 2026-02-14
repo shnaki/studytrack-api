@@ -29,6 +29,7 @@ type listGoalsOutput struct {
 	Body []dto.GoalResponse
 }
 
+// RegisterGoalRoutes registers goal-related routes to the Huma API.
 func RegisterGoalRoutes(api huma.API, uc *usecase.GoalUsecase) {
 	huma.Register(api, huma.Operation{
 		OperationID: "upsert-goal",

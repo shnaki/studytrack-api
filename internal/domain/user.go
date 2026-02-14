@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// User represents a system user.
 type User struct {
 	ID        string
 	Name      string
@@ -9,6 +10,7 @@ type User struct {
 	UpdatedAt time.Time
 }
 
+// NewUser creates a new User entity.
 func NewUser(id, name string) (*User, error) {
 	if err := validateUserName(name); err != nil {
 		return nil, err
@@ -22,6 +24,7 @@ func NewUser(id, name string) (*User, error) {
 	}, nil
 }
 
+// ReconstructUser reconstructs a User entity from existing data.
 func ReconstructUser(id, name string, createdAt, updatedAt time.Time) *User {
 	return &User{
 		ID:        id,

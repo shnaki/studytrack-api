@@ -8,12 +8,14 @@ import (
 	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
+// StatsUsecase provides methods for calculating study statistics.
 type StatsUsecase struct {
 	studyLogRepo port.StudyLogRepository
 	goalRepo     port.GoalRepository
 	subjectRepo  port.SubjectRepository
 }
 
+// NewStatsUsecase creates a new StatsUsecase.
 func NewStatsUsecase(
 	studyLogRepo port.StudyLogRepository,
 	goalRepo port.GoalRepository,
@@ -26,6 +28,7 @@ func NewStatsUsecase(
 	}
 }
 
+// GetWeeklyStats calculates study statistics for a specific week.
 func (u *StatsUsecase) GetWeeklyStats(ctx context.Context, userID string, weekStart time.Time) (*domain.WeeklyStats, error) {
 	weekEnd := weekStart.AddDate(0, 0, 7)
 

@@ -9,7 +9,7 @@ import (
 )
 
 func toHTTPError(err error) error {
-	var domErr *domain.DomainError
+	var domErr *domain.Error
 	if errors.As(err, &domErr) {
 		switch domErr.Type {
 		case domain.ErrorTypeNotFound:

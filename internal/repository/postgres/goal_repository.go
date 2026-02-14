@@ -15,6 +15,7 @@ type goalRepository struct {
 	q *sqlcgen.Queries
 }
 
+// NewGoalRepository creates a new GoalRepository implementation using PostgreSQL.
 func NewGoalRepository(pool *pgxpool.Pool) port.GoalRepository {
 	return &goalRepository{q: sqlcgen.New(pool)}
 }

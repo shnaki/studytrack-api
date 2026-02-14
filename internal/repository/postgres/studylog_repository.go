@@ -19,6 +19,7 @@ type studyLogRepository struct {
 	pool *pgxpool.Pool
 }
 
+// NewStudyLogRepository creates a new StudyLogRepository implementation using PostgreSQL.
 func NewStudyLogRepository(pool *pgxpool.Pool) port.StudyLogRepository {
 	return &studyLogRepository{
 		q:    sqlcgen.New(pool),

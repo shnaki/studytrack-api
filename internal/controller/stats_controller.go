@@ -20,6 +20,7 @@ type getWeeklyStatsOutput struct {
 	Body dto.WeeklyStatsResponse
 }
 
+// RegisterStatsRoutes registers statistics-related routes to the Huma API.
 func RegisterStatsRoutes(api huma.API, uc *usecase.StatsUsecase) {
 	huma.Register(api, huma.Operation{
 		OperationID: "get-weekly-stats",

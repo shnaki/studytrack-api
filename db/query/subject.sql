@@ -13,8 +13,8 @@ FROM subjects
 WHERE user_id = $1
 ORDER BY name;
 
--- name: UpdateSubject :exec
+-- name: UpdateSubject :execresult
 UPDATE subjects SET name = $1, updated_at = $2 WHERE id = $3;
 
--- name: DeleteSubject :exec
+-- name: DeleteSubject :execresult
 DELETE FROM subjects WHERE id = $1;

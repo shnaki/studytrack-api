@@ -9,22 +9,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shnaki/studytrack-api/internal/domain"
+	"github.com/shnaki/studytrack-api/internal/repository/sqlcgen"
 	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
 type userRepository struct {
-	pool *pgxpool.Pool
+	q *sqlcgen.Queries
 }
 
 func NewUserRepository(pool *pgxpool.Pool) port.UserRepository {
-	return &userRepository{pool: pool}
+	return &userRepository{q: sqlcgen.New(pool)}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
-	_, err := r.pool.Exec(ctx,
-		`INSERT INTO users (id, name, created_at, updated_at) VALUES ($1, $2, $3, $4)`,
-		user.ID, user.Name, user.CreatedAt, user.UpdatedAt,
-	)
+	err := r.q.CreateUser(ctx, sqlcgen.CreateUserParams{
+		ID:        toPgUUID(user.ID),
+		Name:      user.Name,
+		CreatedAt: toPgTimestamptz(user.CreatedAt),
+		UpdatedAt: toPgTimestamptz(user.UpdatedAt),
+	})
 	if err != nil {
 		return fmt.Errorf("insert user: %w", err)
 	}
@@ -32,17 +35,17 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id string) (*domain.User, error) {
-	row := r.pool.QueryRow(ctx,
-		`SELECT id, name, created_at, updated_at FROM users WHERE id = $1`,
-		id,
-	)
-	var u domain.User
-	err := row.Scan(&u.ID, &u.Name, &u.CreatedAt, &u.UpdatedAt)
+	row, err := r.q.GetUserByID(ctx, toPgUUID(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound("user")
 		}
 		return nil, fmt.Errorf("find user: %w", err)
 	}
-	return domain.ReconstructUser(u.ID, u.Name, u.CreatedAt, u.UpdatedAt), nil
+	return domain.ReconstructUser(
+		fromPgUUID(row.ID),
+		row.Name,
+		fromPgTimestamptz(row.CreatedAt),
+		fromPgTimestamptz(row.UpdatedAt),
+	), nil
 }

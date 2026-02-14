@@ -7,5 +7,5 @@ SELECT id, user_id, subject_id, studied_at, minutes, note, created_at
 FROM study_logs
 WHERE id = $1;
 
--- name: DeleteStudyLog :exec
+-- name: DeleteStudyLog :execresult
 DELETE FROM study_logs WHERE id = $1;

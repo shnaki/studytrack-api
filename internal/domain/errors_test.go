@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/shnaki/studytrack-api/internal/domain"
@@ -75,20 +76,31 @@ func TestErrConflict(t *testing.T) {
 func TestIsNotFound_WithNonDomainError(t *testing.T) {
 	err := errors.New("some other error")
 	if domain.IsNotFound(err) {
-		t.Error("expected IsNotFound to return false for non-DomainError")
+		t.Error("expected IsNotFound to return false for non-Error")
 	}
 }
 
 func TestIsValidation_WithNonDomainError(t *testing.T) {
 	err := errors.New("some other error")
 	if domain.IsValidation(err) {
-		t.Error("expected IsValidation to return false for non-DomainError")
+		t.Error("expected IsValidation to return false for non-Error")
 	}
 }
 
 func TestIsConflict_WithNonDomainError(t *testing.T) {
 	err := errors.New("some other error")
 	if domain.IsConflict(err) {
-		t.Error("expected IsConflict to return false for non-DomainError")
+		t.Error("expected IsConflict to return false for non-Error")
+	}
+}
+
+func TestErrorsAs_WrappedError(t *testing.T) {
+	err := domain.ErrNotFound("user")
+	wrappedErr := errors.New("wrapped error: " + err.Error())
+	// fmt.Errorf("%w", err) 形式でラップしないと As は機能しない
+	wrappedErr = fmt.Errorf("wrapped: %w", err)
+
+	if !domain.IsNotFound(wrappedErr) {
+		t.Error("expected IsNotFound to return true for wrapped ErrNotFound")
 	}
 }

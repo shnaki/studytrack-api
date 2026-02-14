@@ -5,10 +5,11 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Register postgres driver for golang-migrate
+	_ "github.com/golang-migrate/migrate/v4/source/file"       // Register file source for golang-migrate
 )
 
+// RunMigrations executes database migrations.
 func RunMigrations(dbURL, migrationsPath string) error {
 	m, err := migrate.New("file://"+migrationsPath, dbURL)
 	if err != nil {

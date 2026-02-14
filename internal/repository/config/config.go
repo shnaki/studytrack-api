@@ -1,3 +1,4 @@
+// Package config provides application configuration.
 package config
 
 import (
@@ -5,6 +6,7 @@ import (
 	"strings"
 )
 
+// Config holds all configuration for the application.
 type Config struct {
 	Port        string
 	DBURL       string
@@ -12,6 +14,7 @@ type Config struct {
 	LogLevel    string
 }
 
+// Load loads the configuration from environment variables.
 func Load() *Config {
 	return &Config{
 		Port:        getEnv("PORT", "8080"),

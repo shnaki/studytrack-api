@@ -36,6 +36,7 @@ type deleteStudyLogInput struct {
 	ID string `path:"id" doc:"Study log ID"`
 }
 
+// RegisterStudyLogRoutes registers study log-related routes to the Huma API.
 func RegisterStudyLogRoutes(api huma.API, uc *usecase.StudyLogUsecase) {
 	huma.Register(api, huma.Operation{
 		OperationID:   "create-study-log",

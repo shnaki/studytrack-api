@@ -1,3 +1,4 @@
+// Package dto contains Data Transfer Objects for the controller layer.
 package dto
 
 import (
@@ -6,12 +7,14 @@ import (
 	"github.com/shnaki/studytrack-api/internal/domain"
 )
 
+// UpsertGoalRequest represents the request body for creating or updating a goal.
 type UpsertGoalRequest struct {
 	TargetMinutesPerWeek int     `json:"targetMinutesPerWeek" minimum:"1" doc:"Target study minutes per week"`
 	StartDate            string  `json:"startDate" doc:"Start date (YYYY-MM-DD)"`
 	EndDate              *string `json:"endDate,omitempty" doc:"End date (YYYY-MM-DD), optional"`
 }
 
+// GoalResponse represents the response body for a goal.
 type GoalResponse struct {
 	ID                   string    `json:"id" doc:"Goal ID"`
 	UserID               string    `json:"userId" doc:"User ID"`
@@ -23,6 +26,7 @@ type GoalResponse struct {
 	UpdatedAt            time.Time `json:"updatedAt" doc:"Last update timestamp"`
 }
 
+// ToGoalResponse converts a domain.Goal to a GoalResponse.
 func ToGoalResponse(g *domain.Goal) GoalResponse {
 	resp := GoalResponse{
 		ID:                   g.ID,
@@ -40,6 +44,7 @@ func ToGoalResponse(g *domain.Goal) GoalResponse {
 	return resp
 }
 
+// ToGoalResponseList converts a list of domain.Goal to a list of GoalResponse.
 func ToGoalResponseList(goals []*domain.Goal) []GoalResponse {
 	result := make([]GoalResponse, len(goals))
 	for i, g := range goals {

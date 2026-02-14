@@ -2,6 +2,7 @@ package dto
 
 import "github.com/shnaki/studytrack-api/internal/domain"
 
+// SubjectWeeklyStatsResponse represents weekly statistics for a specific subject.
 type SubjectWeeklyStatsResponse struct {
 	SubjectID            string  `json:"subjectId" doc:"Subject ID"`
 	SubjectName          string  `json:"subjectName" doc:"Subject name"`
@@ -10,12 +11,14 @@ type SubjectWeeklyStatsResponse struct {
 	AchievementRate      float64 `json:"achievementRate" doc:"Achievement rate percentage (0 if no goal)"`
 }
 
+// WeeklyStatsResponse represents weekly statistics for all subjects.
 type WeeklyStatsResponse struct {
 	WeekStart    string                       `json:"weekStart" doc:"Week start date"`
 	Subjects     []SubjectWeeklyStatsResponse `json:"subjects" doc:"Per-subject stats"`
 	TotalMinutes int                          `json:"totalMinutes" doc:"Total minutes across all subjects"`
 }
 
+// ToWeeklyStatsResponse converts domain.WeeklyStats to WeeklyStatsResponse.
 func ToWeeklyStatsResponse(s *domain.WeeklyStats) WeeklyStatsResponse {
 	subjects := make([]SubjectWeeklyStatsResponse, len(s.Subjects))
 	for i, sub := range s.Subjects {

@@ -18,6 +18,7 @@ type subjectRepository struct {
 	q *sqlcgen.Queries
 }
 
+// NewSubjectRepository creates a new SubjectRepository implementation using PostgreSQL.
 func NewSubjectRepository(pool *pgxpool.Pool) port.SubjectRepository {
 	return &subjectRepository{q: sqlcgen.New(pool)}
 }

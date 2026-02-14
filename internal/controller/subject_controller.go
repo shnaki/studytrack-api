@@ -40,6 +40,7 @@ type deleteSubjectInput struct {
 	ID string `path:"id" doc:"Subject ID"`
 }
 
+// RegisterSubjectRoutes registers subject-related routes to the Huma API.
 func RegisterSubjectRoutes(api huma.API, uc *usecase.SubjectUsecase) {
 	huma.Register(api, huma.Operation{
 		OperationID:   "create-subject",

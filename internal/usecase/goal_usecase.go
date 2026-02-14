@@ -1,3 +1,4 @@
+// Package usecase contains the application logic.
 package usecase
 
 import (
@@ -10,12 +11,14 @@ import (
 	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
+// GoalUsecase provides methods for managing study goals.
 type GoalUsecase struct {
 	goalRepo    port.GoalRepository
 	userRepo    port.UserRepository
 	subjectRepo port.SubjectRepository
 }
 
+// NewGoalUsecase creates a new GoalUsecase.
 func NewGoalUsecase(
 	goalRepo port.GoalRepository,
 	userRepo port.UserRepository,
@@ -28,6 +31,7 @@ func NewGoalUsecase(
 	}
 }
 
+// UpsertGoal creates or updates a goal for a subject.
 func (u *GoalUsecase) UpsertGoal(ctx context.Context, userID, subjectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time) (*domain.Goal, error) {
 	if _, err := u.userRepo.FindByID(ctx, userID); err != nil {
 		return nil, err
@@ -51,6 +55,7 @@ func (u *GoalUsecase) UpsertGoal(ctx context.Context, userID, subjectID string, 
 	return goal, nil
 }
 
+// ListGoals returns all goals for a user.
 func (u *GoalUsecase) ListGoals(ctx context.Context, userID string) ([]*domain.Goal, error) {
 	if _, err := u.userRepo.FindByID(ctx, userID); err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// StudyLog represents a record of study time for a specific subject.
 type StudyLog struct {
 	ID        string
 	UserID    string
@@ -12,6 +13,7 @@ type StudyLog struct {
 	CreatedAt time.Time
 }
 
+// NewStudyLog creates a new StudyLog entity.
 func NewStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int, note string) (*StudyLog, error) {
 	if userID == "" {
 		return nil, ErrValidation("user ID is required")
@@ -33,6 +35,7 @@ func NewStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int,
 	}, nil
 }
 
+// ReconstructStudyLog reconstructs a StudyLog entity from existing data.
 func ReconstructStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int, note string, createdAt time.Time) *StudyLog {
 	return &StudyLog{
 		ID:        id,

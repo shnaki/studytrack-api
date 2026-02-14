@@ -7,11 +7,13 @@ import (
 	"github.com/shnaki/studytrack-api/internal/domain"
 )
 
+// UserRepository defines the interface for user persistence.
 type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) error
 	FindByID(ctx context.Context, id string) (*domain.User, error)
 }
 
+// SubjectRepository defines the interface for subject persistence.
 type SubjectRepository interface {
 	Create(ctx context.Context, subject *domain.Subject) error
 	FindByID(ctx context.Context, id string) (*domain.Subject, error)
@@ -20,12 +22,14 @@ type SubjectRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
+// StudyLogFilter defines filters for study log queries.
 type StudyLogFilter struct {
 	From      *time.Time
 	To        *time.Time
 	SubjectID *string
 }
 
+// StudyLogRepository defines the interface for study log persistence.
 type StudyLogRepository interface {
 	Create(ctx context.Context, log *domain.StudyLog) error
 	FindByID(ctx context.Context, id string) (*domain.StudyLog, error)
@@ -33,6 +37,7 @@ type StudyLogRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
+// GoalRepository defines the interface for goal persistence.
 type GoalRepository interface {
 	Upsert(ctx context.Context, goal *domain.Goal) error
 	FindByUserID(ctx context.Context, userID string) ([]*domain.Goal, error)

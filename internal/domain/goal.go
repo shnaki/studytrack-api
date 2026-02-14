@@ -2,6 +2,7 @@ package domain
 
 import "time"
 
+// Goal represents a study goal for a specific subject.
 type Goal struct {
 	ID                   string
 	UserID               string
@@ -13,6 +14,7 @@ type Goal struct {
 	UpdatedAt            time.Time
 }
 
+// NewGoal creates a new Goal entity.
 func NewGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time) (*Goal, error) {
 	if userID == "" {
 		return nil, ErrValidation("user ID is required")
@@ -39,6 +41,7 @@ func NewGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate t
 	}, nil
 }
 
+// ReconstructGoal reconstructs a Goal entity from existing data.
 func ReconstructGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time, createdAt, updatedAt time.Time) *Goal {
 	return &Goal{
 		ID:                   id,

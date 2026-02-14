@@ -56,24 +56,26 @@ func TestGetWeeklyStats(t *testing.T) {
 
 	if math == nil {
 		t.Fatal("expected Math subject in stats")
-	}
-	if math.TotalMinutes != 150 {
-		t.Errorf("expected 150 minutes for Math, got %d", math.TotalMinutes)
-	}
-	if math.TargetMinutesPerWeek != 200 {
-		t.Errorf("expected target 200, got %d", math.TargetMinutesPerWeek)
-	}
-	if math.AchievementRate != 75.0 {
-		t.Errorf("expected 75%% achievement, got %.1f%%", math.AchievementRate)
+	} else {
+		if math.TotalMinutes != 150 {
+			t.Errorf("expected 150 minutes for Math, got %d", math.TotalMinutes)
+		}
+		if math.TargetMinutesPerWeek != 200 {
+			t.Errorf("expected target 200, got %d", math.TargetMinutesPerWeek)
+		}
+		if math.AchievementRate != 75.0 {
+			t.Errorf("expected 75%% achievement, got %.1f%%", math.AchievementRate)
+		}
 	}
 
 	if english == nil {
 		t.Fatal("expected English subject in stats")
-	}
-	if english.TotalMinutes != 30 {
-		t.Errorf("expected 30 minutes for English, got %d", english.TotalMinutes)
-	}
-	if english.TargetMinutesPerWeek != 0 {
-		t.Errorf("expected target 0 (no goal), got %d", english.TargetMinutesPerWeek)
+	} else {
+		if english.TotalMinutes != 30 {
+			t.Errorf("expected 30 minutes for English, got %d", english.TotalMinutes)
+		}
+		if english.TargetMinutesPerWeek != 0 {
+			t.Errorf("expected target 0 (no goal), got %d", english.TargetMinutesPerWeek)
+		}
 	}
 }

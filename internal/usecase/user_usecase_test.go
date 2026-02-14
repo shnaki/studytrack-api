@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/shnaki/studytrack-api/internal/application/usecase"
 	"github.com/shnaki/studytrack-api/internal/domain"
+	"github.com/shnaki/studytrack-api/internal/usecase"
 )
 
 // --- Mock UserRepository ---

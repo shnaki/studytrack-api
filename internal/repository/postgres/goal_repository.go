@@ -6,8 +6,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/shnaki/studytrack-api/internal/application/port"
 	"github.com/shnaki/studytrack-api/internal/domain"
+	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
 type goalRepository struct {

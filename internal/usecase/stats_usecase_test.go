@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shnaki/studytrack-api/internal/application/port"
-	"github.com/shnaki/studytrack-api/internal/application/usecase"
 	"github.com/shnaki/studytrack-api/internal/domain"
+	"github.com/shnaki/studytrack-api/internal/usecase"
+	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
 // --- Mock Repositories for Stats ---

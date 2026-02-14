@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	"github.com/shnaki/studytrack-api/internal/application/port"
-	"github.com/shnaki/studytrack-api/internal/application/usecase"
-	"github.com/shnaki/studytrack-api/internal/handler/dto"
+	"github.com/shnaki/studytrack-api/internal/controller/dto"
+	"github.com/shnaki/studytrack-api/internal/usecase"
+	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
 type createStudyLogInput struct {

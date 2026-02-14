@@ -1,0 +1,34 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/studytrack-api
+/tmp/
+
+# Test
+*.test
+*.out
+coverage.html
+
+# Dependency
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/bin/
+/dist/

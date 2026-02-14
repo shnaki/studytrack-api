@@ -10,22 +10,26 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/shnaki/studytrack-api/internal/domain"
+	"github.com/shnaki/studytrack-api/internal/repository/sqlcgen"
 	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
 type subjectRepository struct {
-	pool *pgxpool.Pool
+	q *sqlcgen.Queries
 }
 
 func NewSubjectRepository(pool *pgxpool.Pool) port.SubjectRepository {
-	return &subjectRepository{pool: pool}
+	return &subjectRepository{q: sqlcgen.New(pool)}
 }
 
 func (r *subjectRepository) Create(ctx context.Context, subject *domain.Subject) error {
-	_, err := r.pool.Exec(ctx,
-		`INSERT INTO subjects (id, user_id, name, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
-		subject.ID, subject.UserID, subject.Name, subject.CreatedAt, subject.UpdatedAt,
-	)
+	err := r.q.CreateSubject(ctx, sqlcgen.CreateSubjectParams{
+		ID:        toPgUUID(subject.ID),
+		UserID:    toPgUUID(subject.UserID),
+		Name:      subject.Name,
+		CreatedAt: toPgTimestamptz(subject.CreatedAt),
+		UpdatedAt: toPgTimestamptz(subject.UpdatedAt),
+	})
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -37,47 +41,46 @@ func (r *subjectRepository) Create(ctx context.Context, subject *domain.Subject)
 }
 
 func (r *subjectRepository) FindByID(ctx context.Context, id string) (*domain.Subject, error) {
-	row := r.pool.QueryRow(ctx,
-		`SELECT id, user_id, name, created_at, updated_at FROM subjects WHERE id = $1`,
-		id,
-	)
-	var s domain.Subject
-	err := row.Scan(&s.ID, &s.UserID, &s.Name, &s.CreatedAt, &s.UpdatedAt)
+	row, err := r.q.GetSubjectByID(ctx, toPgUUID(id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrNotFound("subject")
 		}
 		return nil, fmt.Errorf("find subject: %w", err)
 	}
-	return domain.ReconstructSubject(s.ID, s.UserID, s.Name, s.CreatedAt, s.UpdatedAt), nil
+	return domain.ReconstructSubject(
+		fromPgUUID(row.ID),
+		fromPgUUID(row.UserID),
+		row.Name,
+		fromPgTimestamptz(row.CreatedAt),
+		fromPgTimestamptz(row.UpdatedAt),
+	), nil
 }
 
 func (r *subjectRepository) FindByUserID(ctx context.Context, userID string) ([]*domain.Subject, error) {
-	rows, err := r.pool.Query(ctx,
-		`SELECT id, user_id, name, created_at, updated_at FROM subjects WHERE user_id = $1 ORDER BY name`,
-		userID,
-	)
+	rows, err := r.q.ListSubjectsByUserID(ctx, toPgUUID(userID))
 	if err != nil {
 		return nil, fmt.Errorf("find subjects: %w", err)
 	}
-	defer rows.Close()
-
-	var subjects []*domain.Subject
-	for rows.Next() {
-		var s domain.Subject
-		if err := rows.Scan(&s.ID, &s.UserID, &s.Name, &s.CreatedAt, &s.UpdatedAt); err != nil {
-			return nil, fmt.Errorf("scan subject: %w", err)
-		}
-		subjects = append(subjects, domain.ReconstructSubject(s.ID, s.UserID, s.Name, s.CreatedAt, s.UpdatedAt))
+	subjects := make([]*domain.Subject, 0, len(rows))
+	for _, row := range rows {
+		subjects = append(subjects, domain.ReconstructSubject(
+			fromPgUUID(row.ID),
+			fromPgUUID(row.UserID),
+			row.Name,
+			fromPgTimestamptz(row.CreatedAt),
+			fromPgTimestamptz(row.UpdatedAt),
+		))
 	}
-	return subjects, rows.Err()
+	return subjects, nil
 }
 
 func (r *subjectRepository) Update(ctx context.Context, subject *domain.Subject) error {
-	tag, err := r.pool.Exec(ctx,
-		`UPDATE subjects SET name = $1, updated_at = $2 WHERE id = $3`,
-		subject.Name, subject.UpdatedAt, subject.ID,
-	)
+	tag, err := r.q.UpdateSubject(ctx, sqlcgen.UpdateSubjectParams{
+		Name:      subject.Name,
+		UpdatedAt: toPgTimestamptz(subject.UpdatedAt),
+		ID:        toPgUUID(subject.ID),
+	})
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
@@ -92,10 +95,7 @@ func (r *subjectRepository) Update(ctx context.Context, subject *domain.Subject)
 }
 
 func (r *subjectRepository) Delete(ctx context.Context, id string) error {
-	tag, err := r.pool.Exec(ctx,
-		`DELETE FROM subjects WHERE id = $1`,
-		id,
-	)
+	tag, err := r.q.DeleteSubject(ctx, toPgUUID(id))
 	if err != nil {
 		return fmt.Errorf("delete subject: %w", err)
 	}

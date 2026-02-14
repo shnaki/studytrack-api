@@ -18,24 +18,23 @@ test-cover:
 	go tool cover -html=coverage.out -o coverage.html
 
 lint:
-	golangci-lint run ./...
+	go tool golangci-lint run ./...
 
 fmt:
 	gofmt -w .
-	goimports -w .
+	go tool goimports -w .
 
 migrate-up:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" up
+	go run ./cmd/migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" up
 
 migrate-down:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" down 1
+	go run ./cmd/migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" down 1
 
 migrate-create:
-	@read -p "Migration name: " name; \
-	migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $$name
+	go run ./cmd/migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq
 
 sqlc:
-	sqlc generate
+	go tool sqlc generate
 
 docker-build:
 	docker build -t studytrack-api .

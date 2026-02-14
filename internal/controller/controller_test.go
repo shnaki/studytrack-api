@@ -175,7 +175,9 @@ func setupRouter(t *testing.T) (http.Handler, *mockUserRepository, *mockSubjectR
 func jsonRequest(method, path string, body any) *http.Request {
 	var buf bytes.Buffer
 	if body != nil {
-		json.NewEncoder(&buf).Encode(body)
+		if err := json.NewEncoder(&buf).Encode(body); err != nil {
+			panic(err) // This is for test setup, should not happen with valid input
+		}
 	}
 	req := httptest.NewRequest(method, path, &buf)
 	req.Header.Set("Content-Type", "application/json")

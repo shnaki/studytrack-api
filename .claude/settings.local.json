@@ -9,7 +9,9 @@
       "Bash(go build:*)",
       "Bash(go test:*)",
       "Bash(go vet:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(go run:*)",
+      "Bash(echo:*)"
     ]
   }
 }

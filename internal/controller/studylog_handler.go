@@ -22,10 +22,10 @@ type createStudyLogOutput struct {
 }
 
 type listStudyLogsInput struct {
-	UserID    string  `path:"userId" doc:"User ID"`
-	From      *string `query:"from" doc:"Start date (YYYY-MM-DD)" example:"2024-01-01"`
-	To        *string `query:"to" doc:"End date (YYYY-MM-DD)" example:"2024-01-31"`
-	SubjectID *string `query:"subjectId" doc:"Filter by subject ID"`
+	UserID    string `path:"userId" doc:"User ID"`
+	From      string `query:"from" doc:"Start date (YYYY-MM-DD)" example:"2024-01-01"`
+	To        string `query:"to" doc:"End date (YYYY-MM-DD)" example:"2024-01-31"`
+	SubjectID string `query:"subjectId" doc:"Filter by subject ID"`
 }
 
 type listStudyLogsOutput struct {
@@ -88,21 +88,23 @@ func RegisterStudyLogRoutes(api huma.API, uc *usecase.StudyLogUsecase) {
 func parseStudyLogFilter(input *listStudyLogsInput) (port.StudyLogFilter, error) {
 	var filter port.StudyLogFilter
 
-	if input.From != nil {
-		t, err := time.Parse("2006-01-02", *input.From)
+	if input.From != "" {
+		t, err := time.Parse("2006-01-02", input.From)
 		if err != nil {
 			return filter, huma.Error400BadRequest("invalid 'from' date format, expected YYYY-MM-DD")
 		}
 		filter.From = &t
 	}
-	if input.To != nil {
-		t, err := time.Parse("2006-01-02", *input.To)
+	if input.To != "" {
+		t, err := time.Parse("2006-01-02", input.To)
 		if err != nil {
 			return filter, huma.Error400BadRequest("invalid 'to' date format, expected YYYY-MM-DD")
 		}
 		endOfDay := t.AddDate(0, 0, 1)
 		filter.To = &endOfDay
 	}
-	filter.SubjectID = input.SubjectID
+	if input.SubjectID != "" {
+		filter.SubjectID = &input.SubjectID
+	}
 	return filter, nil
 }

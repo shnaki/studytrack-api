@@ -40,12 +40,17 @@ func NewRouter(usecases *Usecases, corsOrigins []string, logger *slog.Logger) ht
 		MaxAge:           300,
 	}))
 
-	// Huma API
+	// Versioned API sub-router
+	v1 := chi.NewRouter()
+	router.Mount("/v1", v1)
+
+	// Huma API on /v1
 	config := huma.DefaultConfig("StudyTrack API", "1.0.0")
 	config.Info.Description = "Learning progress tracking REST API"
-	api := humachi.New(router, config)
+	config.Servers = []*huma.Server{{URL: "/v1"}}
+	api := humachi.New(v1, config)
 
-	// Register routes
+	// Register routes (paths are relative to /v1)
 	RegisterUserRoutes(api, usecases.User)
 	RegisterSubjectRoutes(api, usecases.Subject)
 	RegisterStudyLogRoutes(api, usecases.StudyLog)

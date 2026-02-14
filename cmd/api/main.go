@@ -82,7 +82,7 @@ func main() {
 	}()
 
 	logger.Info(fmt.Sprintf("server starting on :%s", cfg.Port))
-	logger.Info("OpenAPI docs available at /docs")
+	logger.Info("OpenAPI docs available at /v1/docs")
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		logger.Error("server error", "error", err)
 		os.Exit(1)

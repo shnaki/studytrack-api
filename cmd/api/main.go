@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/shnaki/studytrack-api/internal/application/usecase"
-	"github.com/shnaki/studytrack-api/internal/handler"
-	"github.com/shnaki/studytrack-api/internal/infrastructure/config"
-	"github.com/shnaki/studytrack-api/internal/infrastructure/postgres"
+	"github.com/shnaki/studytrack-api/internal/controller"
+	"github.com/shnaki/studytrack-api/internal/repository/config"
+	"github.com/shnaki/studytrack-api/internal/repository/postgres"
+	"github.com/shnaki/studytrack-api/internal/usecase"
 )
 
 func main() {
@@ -48,7 +48,7 @@ func main() {
 	goalRepo := postgres.NewGoalRepository(pool)
 
 	// Usecases
-	usecases := &handler.Usecases{
+	usecases := &controller.Usecases{
 		User:     usecase.NewUserUsecase(userRepo),
 		Subject:  usecase.NewSubjectUsecase(subjectRepo, userRepo),
 		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, subjectRepo),
@@ -57,7 +57,7 @@ func main() {
 	}
 
 	// Router
-	router := handler.NewRouter(usecases, cfg.CORSOrigins, logger)
+	router := controller.NewRouter(usecases, cfg.CORSOrigins, logger)
 
 	// Server
 	srv := &http.Server{

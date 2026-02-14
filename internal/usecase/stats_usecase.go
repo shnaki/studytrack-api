@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/shnaki/studytrack-api/internal/application/port"
 	"github.com/shnaki/studytrack-api/internal/domain"
+	"github.com/shnaki/studytrack-api/internal/usecase/port"
 )
 
 type StatsUsecase struct {

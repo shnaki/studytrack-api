@@ -1,4 +1,4 @@
-package handler
+package controller
 
 import (
 	"log/slog"
@@ -11,7 +11,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
-	"github.com/shnaki/studytrack-api/internal/application/usecase"
+	"github.com/shnaki/studytrack-api/internal/usecase"
 )
 
 type Usecases struct {

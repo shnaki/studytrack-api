@@ -55,28 +55,38 @@ cp .env.example .env
 
 ### 3. APIサーバ起動
 
+#### 通常起動
 ```bash
 make dev
+```
+
+#### ホットリロード有効（Docker）
+
+ソースコードの変更を検知して自動的に再ビルド・再起動を行います。
+
+```bash
+make docker-up-hotreload
 ```
 
 起動後、マイグレーションが自動適用されます。
 
 ## 開発コマンド
 
-| コマンド | 説明 |
-|---|---|
-| `make dev` | APIサーバ起動（ホットリロードなし） |
-| `make build` | バイナリビルド |
-| `make test` | テスト実行 |
-| `make test-cover` | カバレッジ付きテスト |
-| `make lint` | golangci-lint 実行 |
-| `make fmt` | フォーマット |
-| `make migrate-up` | マイグレーション適用 |
-| `make migrate-down` | マイグレーション1つロールバック |
-| `make migrate-create` | 新規マイグレーション作成 |
-| `make sqlc` | sqlcコード生成 |
-| `make docker-build` | Dockerイメージビルド |
-| `make docker-up` | docker compose up |
+| コマンド                       | 説明                          |
+|----------------------------|-----------------------------|
+| `make dev`                 | APIサーバ起動（ホットリロードなし）         |
+| `make docker-up-hotreload` | Docker環境でのホットリロード付きAPIサーバ起動 |
+| `make build`               | バイナリビルド                     |
+| `make test`                | テスト実行                       |
+| `make test-cover`          | カバレッジ付きテスト                  |
+| `make lint`                | golangci-lint 実行            |
+| `make fmt`                 | フォーマット                      |
+| `make migrate-up`          | マイグレーション適用                  |
+| `make migrate-down`        | マイグレーション1つロールバック            |
+| `make migrate-create`      | 新規マイグレーション作成                |
+| `make sqlc`                | sqlcコード生成                   |
+| `make docker-build`        | Dockerイメージビルド               |
+| `make docker-up`           | docker compose up           |
 
 ## OpenAPI
 

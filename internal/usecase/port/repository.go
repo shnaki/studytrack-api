@@ -42,3 +42,12 @@ type GoalRepository interface {
 	Upsert(ctx context.Context, goal *domain.Goal) error
 	FindByUserID(ctx context.Context, userID string) ([]*domain.Goal, error)
 }
+
+// NoteRepository defines the interface for note persistence.
+type NoteRepository interface {
+	Create(ctx context.Context, note *domain.Note) error
+	FindByID(ctx context.Context, id string) (*domain.Note, error)
+	FindByProjectID(ctx context.Context, projectID string) ([]*domain.Note, error)
+	Update(ctx context.Context, note *domain.Note) error
+	Delete(ctx context.Context, id string) error
+}

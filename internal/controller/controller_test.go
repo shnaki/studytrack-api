@@ -150,6 +150,53 @@ func (m *mockGoalRepository) FindByUserID(_ context.Context, userID string) ([]*
 	return result, nil
 }
 
+type mockNoteRepository struct {
+	notes map[string]*domain.Note
+}
+
+func newMockNoteRepo() *mockNoteRepository {
+	return &mockNoteRepository{notes: make(map[string]*domain.Note)}
+}
+
+func (m *mockNoteRepository) Create(_ context.Context, n *domain.Note) error {
+	m.notes[n.ID] = n
+	return nil
+}
+
+func (m *mockNoteRepository) FindByID(_ context.Context, id string) (*domain.Note, error) {
+	n, ok := m.notes[id]
+	if !ok {
+		return nil, domain.ErrNotFound("note")
+	}
+	return n, nil
+}
+
+func (m *mockNoteRepository) FindByProjectID(_ context.Context, projectID string) ([]*domain.Note, error) {
+	var result []*domain.Note
+	for _, n := range m.notes {
+		if n.ProjectID == projectID {
+			result = append(result, n)
+		}
+	}
+	return result, nil
+}
+
+func (m *mockNoteRepository) Update(_ context.Context, n *domain.Note) error {
+	if _, ok := m.notes[n.ID]; !ok {
+		return domain.ErrNotFound("note")
+	}
+	m.notes[n.ID] = n
+	return nil
+}
+
+func (m *mockNoteRepository) Delete(_ context.Context, id string) error {
+	if _, ok := m.notes[id]; !ok {
+		return domain.ErrNotFound("note")
+	}
+	delete(m.notes, id)
+	return nil
+}
+
 // --- Helpers ---
 
 func setupRouter(t *testing.T) (http.Handler, *mockUserRepository, *mockProjectRepository, *mockStudyLogRepository, *mockGoalRepository) {
@@ -158,6 +205,7 @@ func setupRouter(t *testing.T) (http.Handler, *mockUserRepository, *mockProjectR
 	projectRepo := newMockProjectRepo()
 	studyLogRepo := newMockStudyLogRepo()
 	goalRepo := newMockGoalRepo()
+	noteRepo := newMockNoteRepo()
 
 	usecases := &controller.Usecases{
 		User:     usecase.NewUserUsecase(userRepo),
@@ -165,6 +213,7 @@ func setupRouter(t *testing.T) (http.Handler, *mockUserRepository, *mockProjectR
 		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, projectRepo),
 		Goal:     usecase.NewGoalUsecase(goalRepo, userRepo, projectRepo),
 		Stats:    usecase.NewStatsUsecase(studyLogRepo, goalRepo, projectRepo),
+		Note:     usecase.NewNoteUsecase(noteRepo, projectRepo, userRepo),
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -860,6 +909,246 @@ func TestListGoals_UserNotFound(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
 	req := jsonRequest("GET", "/v1/users/nonexistent/goals", nil)
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+// --- Note Tests ---
+
+func TestCreateNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user and project
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	// Create note
+	body := map[string]any{
+		"title":   "My Note",
+		"content": "some content",
+		"tags":    []string{"go", "api"},
+	}
+	createNoteReq := jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", body)
+	createNoteRR := doRequest(handler, createNoteReq)
+
+	if createNoteRR.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusCreated, createNoteRR.Code, createNoteRR.Body.String())
+	}
+
+	var noteResp map[string]any
+	parseJSON(t, createNoteRR, &noteResp)
+	if noteResp["title"] != "My Note" {
+		t.Errorf("expected title 'My Note', got '%v'", noteResp["title"])
+	}
+	if noteResp["content"] != "some content" {
+		t.Errorf("expected content 'some content', got '%v'", noteResp["content"])
+	}
+	if noteResp["userId"] != userID {
+		t.Errorf("expected userId '%s', got '%v'", userID, noteResp["userId"])
+	}
+	if noteResp["projectId"] != projectID {
+		t.Errorf("expected projectId '%s', got '%v'", projectID, noteResp["projectId"])
+	}
+	tags, ok := noteResp["tags"].([]any)
+	if !ok || len(tags) != 2 {
+		t.Errorf("expected 2 tags, got %v", noteResp["tags"])
+	}
+}
+
+func TestListNotes_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user and project
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	// Create two notes
+	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "Note 1", "content": "content 1",
+	}))
+	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "Note 2", "content": "content 2",
+	}))
+
+	// List notes
+	listReq := jsonRequest("GET", "/v1/users/"+userID+"/projects/"+projectID+"/notes", nil)
+	listRR := doRequest(handler, listReq)
+
+	if listRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, listRR.Code, listRR.Body.String())
+	}
+
+	var notes []map[string]any
+	parseJSON(t, listRR, &notes)
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+}
+
+func TestGetNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user, project, and note
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	createNoteRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "My Note", "content": "some content",
+	}))
+	var created map[string]any
+	parseJSON(t, createNoteRR, &created)
+	noteID := created["id"].(string)
+
+	// Get note
+	getReq := jsonRequest("GET", "/v1/notes/"+noteID, nil)
+	getRR := doRequest(handler, getReq)
+
+	if getRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, getRR.Code, getRR.Body.String())
+	}
+
+	var noteResp map[string]any
+	parseJSON(t, getRR, &noteResp)
+	if noteResp["title"] != "My Note" {
+		t.Errorf("expected title 'My Note', got '%v'", noteResp["title"])
+	}
+}
+
+func TestGetNote_NotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	req := jsonRequest("GET", "/v1/notes/nonexistent-id", nil)
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+func TestUpdateNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user, project, and note
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	createNoteRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "Old Title", "content": "old content",
+	}))
+	var created map[string]any
+	parseJSON(t, createNoteRR, &created)
+	noteID := created["id"].(string)
+
+	// Update note
+	updateReq := jsonRequest("PUT", "/v1/notes/"+noteID, map[string]any{
+		"title": "New Title", "content": "new content", "tags": []string{"updated"},
+	})
+	updateRR := doRequest(handler, updateReq)
+
+	if updateRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, updateRR.Code, updateRR.Body.String())
+	}
+
+	var updated map[string]any
+	parseJSON(t, updateRR, &updated)
+	if updated["title"] != "New Title" {
+		t.Errorf("expected title 'New Title', got '%v'", updated["title"])
+	}
+	if updated["content"] != "new content" {
+		t.Errorf("expected content 'new content', got '%v'", updated["content"])
+	}
+}
+
+func TestUpdateNote_NotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	req := jsonRequest("PUT", "/v1/notes/nonexistent-id", map[string]any{
+		"title": "Title", "content": "content",
+	})
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+func TestDeleteNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user, project, and note
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	createNoteRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "To Delete", "content": "content",
+	}))
+	var created map[string]any
+	parseJSON(t, createNoteRR, &created)
+	noteID := created["id"].(string)
+
+	// Delete note
+	deleteReq := jsonRequest("DELETE", "/v1/notes/"+noteID, nil)
+	deleteRR := doRequest(handler, deleteReq)
+
+	if deleteRR.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNoContent, deleteRR.Code, deleteRR.Body.String())
+	}
+}
+
+func TestDeleteNote_NotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	req := jsonRequest("DELETE", "/v1/notes/nonexistent-id", nil)
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+func TestCreateNote_UserNotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	body := map[string]any{"title": "Note", "content": "content"}
+	req := jsonRequest("POST", "/v1/users/nonexistent/projects/some-project/notes", body)
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {

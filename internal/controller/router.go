@@ -22,6 +22,7 @@ type Usecases struct {
 	StudyLog *usecase.StudyLogUsecase
 	Goal     *usecase.GoalUsecase
 	Stats    *usecase.StatsUsecase
+	Note     *usecase.NoteUsecase
 }
 
 // NewRouter creates and configures the main HTTP router.
@@ -59,6 +60,7 @@ func NewRouter(usecases *Usecases, corsOrigins []string, logger *slog.Logger) ht
 	RegisterStudyLogRoutes(api, usecases.StudyLog)
 	RegisterGoalRoutes(api, usecases.Goal)
 	RegisterStatsRoutes(api, usecases.Stats)
+	RegisterNoteRoutes(api, usecases.Note)
 
 	return router
 }

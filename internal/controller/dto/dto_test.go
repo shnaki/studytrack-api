@@ -361,3 +361,93 @@ func TestToWeeklyStatsResponse_NoProjects(t *testing.T) {
 		t.Errorf("expected 0 projects, got %d", len(resp.Projects))
 	}
 }
+
+func TestToNoteResponse(t *testing.T) {
+	createdAt := time.Date(2024, 6, 15, 10, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2024, 6, 15, 14, 30, 0, 0, time.UTC)
+	note := &domain.Note{
+		ID:        "note-1",
+		ProjectID: "proj-1",
+		UserID:    "user-1",
+		Title:     "My Note",
+		Content:   "some content",
+		Tags:      []string{"go", "api"},
+		CreatedAt: createdAt,
+		UpdatedAt: updatedAt,
+	}
+
+	resp := dto.ToNoteResponse(note)
+
+	if resp.ID != "note-1" {
+		t.Errorf("expected ID 'note-1', got '%s'", resp.ID)
+	}
+	if resp.ProjectID != "proj-1" {
+		t.Errorf("expected ProjectID 'proj-1', got '%s'", resp.ProjectID)
+	}
+	if resp.UserID != "user-1" {
+		t.Errorf("expected UserID 'user-1', got '%s'", resp.UserID)
+	}
+	if resp.Title != "My Note" {
+		t.Errorf("expected Title 'My Note', got '%s'", resp.Title)
+	}
+	if resp.Content != "some content" {
+		t.Errorf("expected Content 'some content', got '%s'", resp.Content)
+	}
+	if len(resp.Tags) != 2 {
+		t.Fatalf("expected 2 tags, got %d", len(resp.Tags))
+	}
+	if resp.Tags[0] != "go" {
+		t.Errorf("expected first tag 'go', got '%s'", resp.Tags[0])
+	}
+	if !resp.CreatedAt.Equal(createdAt) {
+		t.Errorf("expected CreatedAt %v, got %v", createdAt, resp.CreatedAt)
+	}
+	if !resp.UpdatedAt.Equal(updatedAt) {
+		t.Errorf("expected UpdatedAt %v, got %v", updatedAt, resp.UpdatedAt)
+	}
+}
+
+func TestToNoteResponse_NilTags(t *testing.T) {
+	note := &domain.Note{
+		ID:    "note-1",
+		Title: "Title",
+		Tags:  nil,
+	}
+
+	resp := dto.ToNoteResponse(note)
+
+	if resp.Tags == nil {
+		t.Error("expected Tags to be empty slice, got nil")
+	}
+	if len(resp.Tags) != 0 {
+		t.Errorf("expected 0 tags, got %d", len(resp.Tags))
+	}
+}
+
+func TestToNoteResponseList(t *testing.T) {
+	now := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	notes := []*domain.Note{
+		{ID: "n1", ProjectID: "p1", UserID: "u1", Title: "Note 1", Content: "c1", Tags: []string{"tag1"}, CreatedAt: now, UpdatedAt: now},
+		{ID: "n2", ProjectID: "p1", UserID: "u1", Title: "Note 2", Content: "c2", Tags: []string{"tag2"}, CreatedAt: now, UpdatedAt: now},
+	}
+
+	result := dto.ToNoteResponseList(notes)
+
+	if len(result) != 2 {
+		t.Fatalf("expected 2 responses, got %d", len(result))
+	}
+	if result[0].ID != "n1" {
+		t.Errorf("expected first ID 'n1', got '%s'", result[0].ID)
+	}
+	if result[1].ID != "n2" {
+		t.Errorf("expected second ID 'n2', got '%s'", result[1].ID)
+	}
+}
+
+func TestToNoteResponseList_Empty(t *testing.T) {
+	result := dto.ToNoteResponseList([]*domain.Note{})
+
+	if len(result) != 0 {
+		t.Errorf("expected empty list, got %d items", len(result))
+	}
+}

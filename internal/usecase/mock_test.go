@@ -170,3 +170,52 @@ func (m *mockGoalRepository) FindByUserID(_ context.Context, userID string) ([]*
 	}
 	return result, nil
 }
+
+// --- Mock NoteRepository (map-based) ---
+
+type mockNoteRepository struct {
+	notes map[string]*domain.Note
+}
+
+func newMockNoteRepository() *mockNoteRepository {
+	return &mockNoteRepository{notes: make(map[string]*domain.Note)}
+}
+
+func (m *mockNoteRepository) Create(_ context.Context, note *domain.Note) error {
+	m.notes[note.ID] = note
+	return nil
+}
+
+func (m *mockNoteRepository) FindByID(_ context.Context, id string) (*domain.Note, error) {
+	n, ok := m.notes[id]
+	if !ok {
+		return nil, domain.ErrNotFound("note")
+	}
+	return n, nil
+}
+
+func (m *mockNoteRepository) FindByProjectID(_ context.Context, projectID string) ([]*domain.Note, error) {
+	var result []*domain.Note
+	for _, n := range m.notes {
+		if n.ProjectID == projectID {
+			result = append(result, n)
+		}
+	}
+	return result, nil
+}
+
+func (m *mockNoteRepository) Update(_ context.Context, note *domain.Note) error {
+	if _, ok := m.notes[note.ID]; !ok {
+		return domain.ErrNotFound("note")
+	}
+	m.notes[note.ID] = note
+	return nil
+}
+
+func (m *mockNoteRepository) Delete(_ context.Context, id string) error {
+	if _, ok := m.notes[id]; !ok {
+		return domain.ErrNotFound("note")
+	}
+	delete(m.notes, id)
+	return nil
+}

@@ -19,6 +19,17 @@ type Goal struct {
 	UpdatedAt            pgtype.Timestamptz
 }
 
+type Note struct {
+	ID        pgtype.UUID
+	ProjectID pgtype.UUID
+	UserID    pgtype.UUID
+	Title     string
+	Content   string
+	Tags      []string
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
 type Project struct {
 	ID        pgtype.UUID
 	UserID    pgtype.UUID

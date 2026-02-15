@@ -52,6 +52,7 @@ func run() error {
 	projectRepo := postgres.NewProjectRepository(pool)
 	studyLogRepo := postgres.NewStudyLogRepository(pool)
 	goalRepo := postgres.NewGoalRepository(pool)
+	noteRepo := postgres.NewNoteRepository(pool)
 
 	// Usecases
 	usecases := &controller.Usecases{
@@ -60,6 +61,7 @@ func run() error {
 		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, projectRepo),
 		Goal:     usecase.NewGoalUsecase(goalRepo, userRepo, projectRepo),
 		Stats:    usecase.NewStatsUsecase(studyLogRepo, goalRepo, projectRepo),
+		Note:     usecase.NewNoteUsecase(noteRepo, projectRepo, userRepo),
 	}
 
 	// Router

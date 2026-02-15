@@ -112,12 +112,12 @@ APIサーバ起動後、以下で確認できます:
 
 ## 環境変数
 
-| 変数 | デフォルト | 説明 |
-|---|---|---|
-| `PORT` | `8080` | サーバポート |
-| `DB_URL` | `postgres://studytrack:studytrack@localhost:5432/studytrack?sslmode=disable` | PostgreSQL接続URL |
-| `CORS_ORIGINS` | `http://localhost:5173` | CORS許可オリジン（カンマ区切り） |
-| `LOG_LEVEL` | `debug` | ログレベル |
+| 変数             | デフォルト                                                                        | 説明                 |
+|----------------|------------------------------------------------------------------------------|--------------------|
+| `PORT`         | `8080`                                                                       | サーバポート             |
+| `DB_URL`       | `postgres://studytrack:studytrack@localhost:5432/studytrack?sslmode=disable` | PostgreSQL接続URL    |
+| `CORS_ORIGINS` | `http://localhost:3000`                                                      | CORS許可オリジン（カンマ区切り） |
+| `LOG_LEVEL`    | `debug`                                                                      | ログレベル              |
 
 ## エラーレスポンス
 

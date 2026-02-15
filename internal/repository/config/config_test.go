@@ -21,8 +21,8 @@ func TestLoad_Defaults(t *testing.T) {
 	if cfg.DBURL != "postgres://studytrack:studytrack@localhost:5432/studytrack?sslmode=disable" {
 		t.Errorf("expected default DBURL, got '%s'", cfg.DBURL)
 	}
-	if len(cfg.CORSOrigins) != 1 || cfg.CORSOrigins[0] != "http://localhost:5173" {
-		t.Errorf("expected default CORSOrigins [http://localhost:5173], got %v", cfg.CORSOrigins)
+	if len(cfg.CORSOrigins) != 1 || cfg.CORSOrigins[0] != "http://localhost:3000" {
+		t.Errorf("expected default CORSOrigins [http://localhost:3000], got %v", cfg.CORSOrigins)
 	}
 	if cfg.LogLevel != "debug" {
 		t.Errorf("expected default LogLevel 'debug', got '%s'", cfg.LogLevel)

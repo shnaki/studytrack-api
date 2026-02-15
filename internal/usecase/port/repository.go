@@ -13,12 +13,12 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.User, error)
 }
 
-// SubjectRepository defines the interface for subject persistence.
-type SubjectRepository interface {
-	Create(ctx context.Context, subject *domain.Subject) error
-	FindByID(ctx context.Context, id string) (*domain.Subject, error)
-	FindByUserID(ctx context.Context, userID string) ([]*domain.Subject, error)
-	Update(ctx context.Context, subject *domain.Subject) error
+// ProjectRepository defines the interface for project persistence.
+type ProjectRepository interface {
+	Create(ctx context.Context, project *domain.Project) error
+	FindByID(ctx context.Context, id string) (*domain.Project, error)
+	FindByUserID(ctx context.Context, userID string) ([]*domain.Project, error)
+	Update(ctx context.Context, project *domain.Project) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -26,7 +26,7 @@ type SubjectRepository interface {
 type StudyLogFilter struct {
 	From      *time.Time
 	To        *time.Time
-	SubjectID *string
+	ProjectID *string
 }
 
 // StudyLogRepository defines the interface for study log persistence.

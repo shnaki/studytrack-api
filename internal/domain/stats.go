@@ -5,14 +5,14 @@ import "time"
 // WeeklyStats represents study statistics for a specific week.
 type WeeklyStats struct {
 	WeekStart    time.Time
-	Subjects     []SubjectWeeklyStats
+	Projects     []ProjectWeeklyStats
 	TotalMinutes int
 }
 
-// SubjectWeeklyStats represents study statistics for a specific subject in a week.
-type SubjectWeeklyStats struct {
-	SubjectID            string
-	SubjectName          string
+// ProjectWeeklyStats represents study statistics for a specific project in a week.
+type ProjectWeeklyStats struct {
+	ProjectID            string
+	ProjectName          string
 	TotalMinutes         int
 	TargetMinutesPerWeek int
 	AchievementRate      float64

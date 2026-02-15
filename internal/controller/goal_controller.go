@@ -13,7 +13,7 @@ import (
 
 type upsertGoalInput struct {
 	UserID    string `path:"userId" doc:"User ID"`
-	SubjectID string `path:"subjectId" doc:"Subject ID"`
+	ProjectID string `path:"projectId" doc:"Project ID"`
 	Body      dto.UpsertGoalRequest
 }
 
@@ -34,8 +34,8 @@ func RegisterGoalRoutes(api huma.API, uc *usecase.GoalUsecase) {
 	huma.Register(api, huma.Operation{
 		OperationID: "upsert-goal",
 		Method:      http.MethodPut,
-		Path:        "/users/{userId}/goals/{subjectId}",
-		Summary:     "Create or update a goal for a subject",
+		Path:        "/users/{userId}/goals/{projectId}",
+		Summary:     "Create or update a goal for a project",
 		Tags:        []string{"Goals"},
 	}, func(ctx context.Context, input *upsertGoalInput) (*upsertGoalOutput, error) {
 		startDate, err := time.Parse("2006-01-02", input.Body.StartDate)
@@ -52,7 +52,7 @@ func RegisterGoalRoutes(api huma.API, uc *usecase.GoalUsecase) {
 			endDate = &t
 		}
 
-		goal, err := uc.UpsertGoal(ctx, input.UserID, input.SubjectID, input.Body.TargetMinutesPerWeek, startDate, endDate)
+		goal, err := uc.UpsertGoal(ctx, input.UserID, input.ProjectID, input.Body.TargetMinutesPerWeek, startDate, endDate)
 		if err != nil {
 			return nil, toHTTPError(err)
 		}

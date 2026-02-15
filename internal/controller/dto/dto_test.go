@@ -33,20 +33,20 @@ func TestToUserResponse(t *testing.T) {
 	}
 }
 
-func TestToSubjectResponse(t *testing.T) {
+func TestToProjectResponse(t *testing.T) {
 	now := time.Date(2024, 3, 10, 8, 0, 0, 0, time.UTC)
-	subject := &domain.Subject{
-		ID:        "subj-1",
+	project := &domain.Project{
+		ID:        "proj-1",
 		UserID:    "user-1",
 		Name:      "Mathematics",
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
 
-	resp := dto.ToSubjectResponse(subject)
+	resp := dto.ToProjectResponse(project)
 
-	if resp.ID != "subj-1" {
-		t.Errorf("expected ID 'subj-1', got '%s'", resp.ID)
+	if resp.ID != "proj-1" {
+		t.Errorf("expected ID 'proj-1', got '%s'", resp.ID)
 	}
 	if resp.UserID != "user-1" {
 		t.Errorf("expected UserID 'user-1', got '%s'", resp.UserID)
@@ -62,32 +62,32 @@ func TestToSubjectResponse(t *testing.T) {
 	}
 }
 
-func TestToSubjectResponseList(t *testing.T) {
+func TestToProjectResponseList(t *testing.T) {
 	now := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	subjects := []*domain.Subject{
-		{ID: "s1", UserID: "u1", Name: "Math", CreatedAt: now, UpdatedAt: now},
-		{ID: "s2", UserID: "u1", Name: "English", CreatedAt: now, UpdatedAt: now},
-		{ID: "s3", UserID: "u1", Name: "Science", CreatedAt: now, UpdatedAt: now},
+	projects := []*domain.Project{
+		{ID: "p1", UserID: "u1", Name: "Math", CreatedAt: now, UpdatedAt: now},
+		{ID: "p2", UserID: "u1", Name: "English", CreatedAt: now, UpdatedAt: now},
+		{ID: "p3", UserID: "u1", Name: "Science", CreatedAt: now, UpdatedAt: now},
 	}
 
-	result := dto.ToSubjectResponseList(subjects)
+	result := dto.ToProjectResponseList(projects)
 
 	if len(result) != 3 {
 		t.Fatalf("expected 3 responses, got %d", len(result))
 	}
 	if result[0].Name != "Math" {
-		t.Errorf("expected first subject 'Math', got '%s'", result[0].Name)
+		t.Errorf("expected first project 'Math', got '%s'", result[0].Name)
 	}
 	if result[1].Name != "English" {
-		t.Errorf("expected second subject 'English', got '%s'", result[1].Name)
+		t.Errorf("expected second project 'English', got '%s'", result[1].Name)
 	}
 	if result[2].Name != "Science" {
-		t.Errorf("expected third subject 'Science', got '%s'", result[2].Name)
+		t.Errorf("expected third project 'Science', got '%s'", result[2].Name)
 	}
 }
 
-func TestToSubjectResponseList_Empty(t *testing.T) {
-	result := dto.ToSubjectResponseList([]*domain.Subject{})
+func TestToProjectResponseList_Empty(t *testing.T) {
+	result := dto.ToProjectResponseList([]*domain.Project{})
 
 	if len(result) != 0 {
 		t.Errorf("expected empty list, got %d items", len(result))
@@ -100,7 +100,7 @@ func TestToStudyLogResponse(t *testing.T) {
 	log := &domain.StudyLog{
 		ID:        "log-1",
 		UserID:    "user-1",
-		SubjectID: "subj-1",
+		ProjectID: "proj-1",
 		StudiedAt: studiedAt,
 		Minutes:   90,
 		Note:      "Chapter 5 exercises",
@@ -115,8 +115,8 @@ func TestToStudyLogResponse(t *testing.T) {
 	if resp.UserID != "user-1" {
 		t.Errorf("expected UserID 'user-1', got '%s'", resp.UserID)
 	}
-	if resp.SubjectID != "subj-1" {
-		t.Errorf("expected SubjectID 'subj-1', got '%s'", resp.SubjectID)
+	if resp.ProjectID != "proj-1" {
+		t.Errorf("expected ProjectID 'proj-1', got '%s'", resp.ProjectID)
 	}
 	if !resp.StudiedAt.Equal(studiedAt) {
 		t.Errorf("expected StudiedAt %v, got %v", studiedAt, resp.StudiedAt)
@@ -135,8 +135,8 @@ func TestToStudyLogResponse(t *testing.T) {
 func TestToStudyLogResponseList(t *testing.T) {
 	now := time.Date(2024, 1, 10, 12, 0, 0, 0, time.UTC)
 	logs := []*domain.StudyLog{
-		{ID: "l1", UserID: "u1", SubjectID: "s1", StudiedAt: now, Minutes: 60, Note: "note1", CreatedAt: now},
-		{ID: "l2", UserID: "u1", SubjectID: "s2", StudiedAt: now, Minutes: 30, Note: "note2", CreatedAt: now},
+		{ID: "l1", UserID: "u1", ProjectID: "p1", StudiedAt: now, Minutes: 60, Note: "note1", CreatedAt: now},
+		{ID: "l2", UserID: "u1", ProjectID: "p2", StudiedAt: now, Minutes: 30, Note: "note2", CreatedAt: now},
 	}
 
 	result := dto.ToStudyLogResponseList(logs)
@@ -173,7 +173,7 @@ func TestToGoalResponse_WithoutEndDate(t *testing.T) {
 	goal := &domain.Goal{
 		ID:                   "goal-1",
 		UserID:               "user-1",
-		SubjectID:            "subj-1",
+		ProjectID:            "proj-1",
 		TargetMinutesPerWeek: 300,
 		StartDate:            startDate,
 		EndDate:              nil,
@@ -189,8 +189,8 @@ func TestToGoalResponse_WithoutEndDate(t *testing.T) {
 	if resp.UserID != "user-1" {
 		t.Errorf("expected UserID 'user-1', got '%s'", resp.UserID)
 	}
-	if resp.SubjectID != "subj-1" {
-		t.Errorf("expected SubjectID 'subj-1', got '%s'", resp.SubjectID)
+	if resp.ProjectID != "proj-1" {
+		t.Errorf("expected ProjectID 'proj-1', got '%s'", resp.ProjectID)
 	}
 	if resp.TargetMinutesPerWeek != 300 {
 		t.Errorf("expected TargetMinutesPerWeek 300, got %d", resp.TargetMinutesPerWeek)
@@ -216,7 +216,7 @@ func TestToGoalResponse_WithEndDate(t *testing.T) {
 	goal := &domain.Goal{
 		ID:                   "goal-2",
 		UserID:               "user-1",
-		SubjectID:            "subj-1",
+		ProjectID:            "proj-1",
 		TargetMinutesPerWeek: 120,
 		StartDate:            startDate,
 		EndDate:              &endDate,
@@ -240,8 +240,8 @@ func TestToGoalResponse_WithEndDate(t *testing.T) {
 func TestToGoalResponseList(t *testing.T) {
 	now := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	goals := []*domain.Goal{
-		{ID: "g1", UserID: "u1", SubjectID: "s1", TargetMinutesPerWeek: 100, StartDate: now, CreatedAt: now, UpdatedAt: now},
-		{ID: "g2", UserID: "u1", SubjectID: "s2", TargetMinutesPerWeek: 200, StartDate: now, CreatedAt: now, UpdatedAt: now},
+		{ID: "g1", UserID: "u1", ProjectID: "p1", TargetMinutesPerWeek: 100, StartDate: now, CreatedAt: now, UpdatedAt: now},
+		{ID: "g2", UserID: "u1", ProjectID: "p2", TargetMinutesPerWeek: 200, StartDate: now, CreatedAt: now, UpdatedAt: now},
 	}
 
 	result := dto.ToGoalResponseList(goals)
@@ -275,17 +275,17 @@ func TestToWeeklyStatsResponse(t *testing.T) {
 	weekStart := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	stats := &domain.WeeklyStats{
 		WeekStart: weekStart,
-		Subjects: []domain.SubjectWeeklyStats{
+		Projects: []domain.ProjectWeeklyStats{
 			{
-				SubjectID:            "s1",
-				SubjectName:          "Math",
+				ProjectID:            "p1",
+				ProjectName:          "Math",
 				TotalMinutes:         150,
 				TargetMinutesPerWeek: 200,
 				AchievementRate:      75.0,
 			},
 			{
-				SubjectID:            "s2",
-				SubjectName:          "English",
+				ProjectID:            "p2",
+				ProjectName:          "English",
 				TotalMinutes:         30,
 				TargetMinutesPerWeek: 0,
 				AchievementRate:      0,
@@ -302,16 +302,16 @@ func TestToWeeklyStatsResponse(t *testing.T) {
 	if resp.TotalMinutes != 180 {
 		t.Errorf("expected TotalMinutes 180, got %d", resp.TotalMinutes)
 	}
-	if len(resp.Subjects) != 2 {
-		t.Fatalf("expected 2 subjects, got %d", len(resp.Subjects))
+	if len(resp.Projects) != 2 {
+		t.Fatalf("expected 2 projects, got %d", len(resp.Projects))
 	}
 
-	math := resp.Subjects[0]
-	if math.SubjectID != "s1" {
-		t.Errorf("expected SubjectID 's1', got '%s'", math.SubjectID)
+	math := resp.Projects[0]
+	if math.ProjectID != "p1" {
+		t.Errorf("expected ProjectID 'p1', got '%s'", math.ProjectID)
 	}
-	if math.SubjectName != "Math" {
-		t.Errorf("expected SubjectName 'Math', got '%s'", math.SubjectName)
+	if math.ProjectName != "Math" {
+		t.Errorf("expected ProjectName 'Math', got '%s'", math.ProjectName)
 	}
 	if math.TotalMinutes != 150 {
 		t.Errorf("expected TotalMinutes 150, got %d", math.TotalMinutes)
@@ -323,12 +323,12 @@ func TestToWeeklyStatsResponse(t *testing.T) {
 		t.Errorf("expected AchievementRate 75.0, got %f", math.AchievementRate)
 	}
 
-	english := resp.Subjects[1]
-	if english.SubjectID != "s2" {
-		t.Errorf("expected SubjectID 's2', got '%s'", english.SubjectID)
+	english := resp.Projects[1]
+	if english.ProjectID != "p2" {
+		t.Errorf("expected ProjectID 'p2', got '%s'", english.ProjectID)
 	}
-	if english.SubjectName != "English" {
-		t.Errorf("expected SubjectName 'English', got '%s'", english.SubjectName)
+	if english.ProjectName != "English" {
+		t.Errorf("expected ProjectName 'English', got '%s'", english.ProjectName)
 	}
 	if english.TotalMinutes != 30 {
 		t.Errorf("expected TotalMinutes 30, got %d", english.TotalMinutes)
@@ -341,11 +341,11 @@ func TestToWeeklyStatsResponse(t *testing.T) {
 	}
 }
 
-func TestToWeeklyStatsResponse_NoSubjects(t *testing.T) {
+func TestToWeeklyStatsResponse_NoProjects(t *testing.T) {
 	weekStart := time.Date(2024, 2, 5, 0, 0, 0, 0, time.UTC)
 	stats := &domain.WeeklyStats{
 		WeekStart:    weekStart,
-		Subjects:     []domain.SubjectWeeklyStats{},
+		Projects:     []domain.ProjectWeeklyStats{},
 		TotalMinutes: 0,
 	}
 
@@ -357,7 +357,7 @@ func TestToWeeklyStatsResponse_NoSubjects(t *testing.T) {
 	if resp.TotalMinutes != 0 {
 		t.Errorf("expected TotalMinutes 0, got %d", resp.TotalMinutes)
 	}
-	if len(resp.Subjects) != 0 {
-		t.Errorf("expected 0 subjects, got %d", len(resp.Subjects))
+	if len(resp.Projects) != 0 {
+		t.Errorf("expected 0 projects, got %d", len(resp.Projects))
 	}
 }

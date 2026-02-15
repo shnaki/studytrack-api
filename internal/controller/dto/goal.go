@@ -18,7 +18,7 @@ type UpsertGoalRequest struct {
 type GoalResponse struct {
 	ID                   string    `json:"id" doc:"Goal ID"`
 	UserID               string    `json:"userId" doc:"User ID"`
-	SubjectID            string    `json:"subjectId" doc:"Subject ID"`
+	ProjectID            string    `json:"projectId" doc:"Project ID"`
 	TargetMinutesPerWeek int       `json:"targetMinutesPerWeek" doc:"Target minutes per week"`
 	StartDate            string    `json:"startDate" doc:"Start date"`
 	EndDate              *string   `json:"endDate,omitempty" doc:"End date"`
@@ -31,7 +31,7 @@ func ToGoalResponse(g *domain.Goal) GoalResponse {
 	resp := GoalResponse{
 		ID:                   g.ID,
 		UserID:               g.UserID,
-		SubjectID:            g.SubjectID,
+		ProjectID:            g.ProjectID,
 		TargetMinutesPerWeek: g.TargetMinutesPerWeek,
 		StartDate:            g.StartDate.Format("2006-01-02"),
 		CreatedAt:            g.CreatedAt,

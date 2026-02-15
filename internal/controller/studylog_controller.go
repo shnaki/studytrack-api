@@ -25,7 +25,7 @@ type listStudyLogsInput struct {
 	UserID    string `path:"userId" doc:"User ID"`
 	From      string `query:"from" doc:"Start date (YYYY-MM-DD)" example:"2024-01-01"`
 	To        string `query:"to" doc:"End date (YYYY-MM-DD)" example:"2024-01-31"`
-	SubjectID string `query:"subjectId" doc:"Filter by subject ID"`
+	ProjectID string `query:"projectId" doc:"Filter by project ID"`
 }
 
 type listStudyLogsOutput struct {
@@ -46,7 +46,7 @@ func RegisterStudyLogRoutes(api huma.API, uc *usecase.StudyLogUsecase) {
 		Tags:          []string{"StudyLogs"},
 		DefaultStatus: http.StatusCreated,
 	}, func(ctx context.Context, input *createStudyLogInput) (*createStudyLogOutput, error) {
-		log, err := uc.CreateStudyLog(ctx, input.UserID, input.Body.SubjectID, input.Body.StudiedAt, input.Body.Minutes, input.Body.Note)
+		log, err := uc.CreateStudyLog(ctx, input.UserID, input.Body.ProjectID, input.Body.StudiedAt, input.Body.Minutes, input.Body.Note)
 		if err != nil {
 			return nil, toHTTPError(err)
 		}
@@ -104,8 +104,8 @@ func parseStudyLogFilter(input *listStudyLogsInput) (port.StudyLogFilter, error)
 		endOfDay := t.AddDate(0, 0, 1)
 		filter.To = &endOfDay
 	}
-	if input.SubjectID != "" {
-		filter.SubjectID = &input.SubjectID
+	if input.ProjectID != "" {
+		filter.ProjectID = &input.ProjectID
 	}
 	return filter, nil
 }

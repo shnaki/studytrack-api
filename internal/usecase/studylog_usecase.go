@@ -14,37 +14,37 @@ import (
 type StudyLogUsecase struct {
 	studyLogRepo port.StudyLogRepository
 	userRepo     port.UserRepository
-	subjectRepo  port.SubjectRepository
+	projectRepo  port.ProjectRepository
 }
 
 // NewStudyLogUsecase creates a new StudyLogUsecase.
 func NewStudyLogUsecase(
 	studyLogRepo port.StudyLogRepository,
 	userRepo port.UserRepository,
-	subjectRepo port.SubjectRepository,
+	projectRepo port.ProjectRepository,
 ) *StudyLogUsecase {
 	return &StudyLogUsecase{
 		studyLogRepo: studyLogRepo,
 		userRepo:     userRepo,
-		subjectRepo:  subjectRepo,
+		projectRepo:  projectRepo,
 	}
 }
 
 // CreateStudyLog creates a new study log.
-func (u *StudyLogUsecase) CreateStudyLog(ctx context.Context, userID, subjectID string, studiedAt time.Time, minutes int, note string) (*domain.StudyLog, error) {
+func (u *StudyLogUsecase) CreateStudyLog(ctx context.Context, userID, projectID string, studiedAt time.Time, minutes int, note string) (*domain.StudyLog, error) {
 	if _, err := u.userRepo.FindByID(ctx, userID); err != nil {
 		return nil, err
 	}
-	subject, err := u.subjectRepo.FindByID(ctx, subjectID)
+	project, err := u.projectRepo.FindByID(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
-	if subject.UserID != userID {
-		return nil, domain.ErrNotFound("subject")
+	if project.UserID != userID {
+		return nil, domain.ErrNotFound("project")
 	}
 
 	id := uuid.New().String()
-	log, err := domain.NewStudyLog(id, userID, subjectID, studiedAt, minutes, note)
+	log, err := domain.NewStudyLog(id, userID, projectID, studiedAt, minutes, note)
 	if err != nil {
 		return nil, err
 	}

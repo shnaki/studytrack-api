@@ -49,17 +49,17 @@ func run() error {
 
 	// Repositories
 	userRepo := postgres.NewUserRepository(pool)
-	subjectRepo := postgres.NewSubjectRepository(pool)
+	projectRepo := postgres.NewProjectRepository(pool)
 	studyLogRepo := postgres.NewStudyLogRepository(pool)
 	goalRepo := postgres.NewGoalRepository(pool)
 
 	// Usecases
 	usecases := &controller.Usecases{
 		User:     usecase.NewUserUsecase(userRepo),
-		Subject:  usecase.NewSubjectUsecase(subjectRepo, userRepo),
-		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, subjectRepo),
-		Goal:     usecase.NewGoalUsecase(goalRepo, userRepo, subjectRepo),
-		Stats:    usecase.NewStatsUsecase(studyLogRepo, goalRepo, subjectRepo),
+		Project:  usecase.NewProjectUsecase(projectRepo, userRepo),
+		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, projectRepo),
+		Goal:     usecase.NewGoalUsecase(goalRepo, userRepo, projectRepo),
+		Stats:    usecase.NewStatsUsecase(studyLogRepo, goalRepo, projectRepo),
 	}
 
 	// Router

@@ -8,7 +8,7 @@ import (
 
 // CreateStudyLogRequest represents the request body for creating a study log.
 type CreateStudyLogRequest struct {
-	SubjectID string    `json:"subjectId" doc:"Subject ID"`
+	ProjectID string    `json:"projectId" doc:"Project ID"`
 	StudiedAt time.Time `json:"studiedAt" doc:"When the study session occurred"`
 	Minutes   int       `json:"minutes" minimum:"1" maximum:"1440" doc:"Duration in minutes"`
 	Note      string    `json:"note,omitempty" maxLength:"1000" doc:"Optional note"`
@@ -18,7 +18,7 @@ type CreateStudyLogRequest struct {
 type StudyLogResponse struct {
 	ID        string    `json:"id" doc:"Study log ID"`
 	UserID    string    `json:"userId" doc:"User ID"`
-	SubjectID string    `json:"subjectId" doc:"Subject ID"`
+	ProjectID string    `json:"projectId" doc:"Project ID"`
 	StudiedAt time.Time `json:"studiedAt" doc:"When the study session occurred"`
 	Minutes   int       `json:"minutes" doc:"Duration in minutes"`
 	Note      string    `json:"note" doc:"Note"`
@@ -30,7 +30,7 @@ func ToStudyLogResponse(l *domain.StudyLog) StudyLogResponse {
 	return StudyLogResponse{
 		ID:        l.ID,
 		UserID:    l.UserID,
-		SubjectID: l.SubjectID,
+		ProjectID: l.ProjectID,
 		StudiedAt: l.StudiedAt,
 		Minutes:   l.Minutes,
 		Note:      l.Note,

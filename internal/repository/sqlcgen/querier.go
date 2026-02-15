@@ -12,17 +12,17 @@ import (
 )
 
 type Querier interface {
+	CreateProject(ctx context.Context, arg CreateProjectParams) error
 	CreateStudyLog(ctx context.Context, arg CreateStudyLogParams) error
-	CreateSubject(ctx context.Context, arg CreateSubjectParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	DeleteProject(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
 	DeleteStudyLog(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
-	DeleteSubject(ctx context.Context, id pgtype.UUID) (pgconn.CommandTag, error)
+	GetProjectByID(ctx context.Context, id pgtype.UUID) (Project, error)
 	GetStudyLogByID(ctx context.Context, id pgtype.UUID) (StudyLog, error)
-	GetSubjectByID(ctx context.Context, id pgtype.UUID) (Subject, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	ListGoalsByUserID(ctx context.Context, userID pgtype.UUID) ([]Goal, error)
-	ListSubjectsByUserID(ctx context.Context, userID pgtype.UUID) ([]Subject, error)
-	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (pgconn.CommandTag, error)
+	ListProjectsByUserID(ctx context.Context, userID pgtype.UUID) ([]Project, error)
+	UpdateProject(ctx context.Context, arg UpdateProjectParams) (pgconn.CommandTag, error)
 	UpsertGoal(ctx context.Context, arg UpsertGoalParams) error
 }
 

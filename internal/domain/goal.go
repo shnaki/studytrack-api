@@ -2,11 +2,11 @@ package domain
 
 import "time"
 
-// Goal represents a study goal for a specific subject.
+// Goal represents a study goal for a specific project.
 type Goal struct {
 	ID                   string
 	UserID               string
-	SubjectID            string
+	ProjectID            string
 	TargetMinutesPerWeek int
 	StartDate            time.Time
 	EndDate              *time.Time
@@ -15,12 +15,12 @@ type Goal struct {
 }
 
 // NewGoal creates a new Goal entity.
-func NewGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time) (*Goal, error) {
+func NewGoal(id, userID, projectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time) (*Goal, error) {
 	if userID == "" {
 		return nil, ErrValidation("user ID is required")
 	}
-	if subjectID == "" {
-		return nil, ErrValidation("subject ID is required")
+	if projectID == "" {
+		return nil, ErrValidation("project ID is required")
 	}
 	if err := validateTargetMinutes(targetMinutesPerWeek); err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func NewGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate t
 	return &Goal{
 		ID:                   id,
 		UserID:               userID,
-		SubjectID:            subjectID,
+		ProjectID:            projectID,
 		TargetMinutesPerWeek: targetMinutesPerWeek,
 		StartDate:            startDate,
 		EndDate:              endDate,
@@ -42,11 +42,11 @@ func NewGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate t
 }
 
 // ReconstructGoal reconstructs a Goal entity from existing data.
-func ReconstructGoal(id, userID, subjectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time, createdAt, updatedAt time.Time) *Goal {
+func ReconstructGoal(id, userID, projectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time, createdAt, updatedAt time.Time) *Goal {
 	return &Goal{
 		ID:                   id,
 		UserID:               userID,
-		SubjectID:            subjectID,
+		ProjectID:            projectID,
 		TargetMinutesPerWeek: targetMinutesPerWeek,
 		StartDate:            startDate,
 		EndDate:              endDate,

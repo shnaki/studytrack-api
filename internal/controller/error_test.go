@@ -64,7 +64,7 @@ func TestToHTTPError_GenericError(t *testing.T) {
 }
 
 func TestToHTTPError_WrappedDomainError(t *testing.T) {
-	domErr := domain.ErrNotFound("subject")
+	domErr := domain.ErrNotFound("project")
 	wrapped := fmt.Errorf("wrap: %w", domErr)
 	httpErr := toHTTPError(wrapped)
 

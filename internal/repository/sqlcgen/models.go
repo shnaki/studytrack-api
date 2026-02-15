@@ -11,7 +11,7 @@ import (
 type Goal struct {
 	ID                   pgtype.UUID
 	UserID               pgtype.UUID
-	SubjectID            pgtype.UUID
+	ProjectID            pgtype.UUID
 	TargetMinutesPerWeek int32
 	StartDate            pgtype.Date
 	EndDate              pgtype.Date
@@ -19,22 +19,22 @@ type Goal struct {
 	UpdatedAt            pgtype.Timestamptz
 }
 
-type StudyLog struct {
-	ID        pgtype.UUID
-	UserID    pgtype.UUID
-	SubjectID pgtype.UUID
-	StudiedAt pgtype.Timestamptz
-	Minutes   int32
-	Note      string
-	CreatedAt pgtype.Timestamptz
-}
-
-type Subject struct {
+type Project struct {
 	ID        pgtype.UUID
 	UserID    pgtype.UUID
 	Name      string
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+}
+
+type StudyLog struct {
+	ID        pgtype.UUID
+	UserID    pgtype.UUID
+	ProjectID pgtype.UUID
+	StudiedAt pgtype.Timestamptz
+	Minutes   int32
+	Note      string
+	CreatedAt pgtype.Timestamptz
 }
 
 type User struct {

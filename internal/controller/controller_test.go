@@ -40,44 +40,44 @@ func (m *mockUserRepository) FindByID(_ context.Context, id string) (*domain.Use
 	return u, nil
 }
 
-type mockSubjectRepository struct {
-	subjects map[string]*domain.Subject
+type mockProjectRepository struct {
+	projects map[string]*domain.Project
 }
 
-func newMockSubjectRepo() *mockSubjectRepository {
-	return &mockSubjectRepository{subjects: make(map[string]*domain.Subject)}
+func newMockProjectRepo() *mockProjectRepository {
+	return &mockProjectRepository{projects: make(map[string]*domain.Project)}
 }
 
-func (m *mockSubjectRepository) Create(_ context.Context, s *domain.Subject) error {
-	m.subjects[s.ID] = s
+func (m *mockProjectRepository) Create(_ context.Context, p *domain.Project) error {
+	m.projects[p.ID] = p
 	return nil
 }
 
-func (m *mockSubjectRepository) FindByID(_ context.Context, id string) (*domain.Subject, error) {
-	s, ok := m.subjects[id]
+func (m *mockProjectRepository) FindByID(_ context.Context, id string) (*domain.Project, error) {
+	p, ok := m.projects[id]
 	if !ok {
-		return nil, domain.ErrNotFound("subject")
+		return nil, domain.ErrNotFound("project")
 	}
-	return s, nil
+	return p, nil
 }
 
-func (m *mockSubjectRepository) FindByUserID(_ context.Context, userID string) ([]*domain.Subject, error) {
-	var result []*domain.Subject
-	for _, s := range m.subjects {
-		if s.UserID == userID {
-			result = append(result, s)
+func (m *mockProjectRepository) FindByUserID(_ context.Context, userID string) ([]*domain.Project, error) {
+	var result []*domain.Project
+	for _, p := range m.projects {
+		if p.UserID == userID {
+			result = append(result, p)
 		}
 	}
 	return result, nil
 }
 
-func (m *mockSubjectRepository) Update(_ context.Context, s *domain.Subject) error {
-	m.subjects[s.ID] = s
+func (m *mockProjectRepository) Update(_ context.Context, p *domain.Project) error {
+	m.projects[p.ID] = p
 	return nil
 }
 
-func (m *mockSubjectRepository) Delete(_ context.Context, id string) error {
-	delete(m.subjects, id)
+func (m *mockProjectRepository) Delete(_ context.Context, id string) error {
+	delete(m.projects, id)
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (m *mockStudyLogRepository) FindByUserID(_ context.Context, userID string, 
 		if filter.To != nil && !l.StudiedAt.Before(*filter.To) {
 			continue
 		}
-		if filter.SubjectID != nil && l.SubjectID != *filter.SubjectID {
+		if filter.ProjectID != nil && l.ProjectID != *filter.ProjectID {
 			continue
 		}
 		result = append(result, l)
@@ -136,7 +136,7 @@ func newMockGoalRepo() *mockGoalRepository {
 }
 
 func (m *mockGoalRepository) Upsert(_ context.Context, g *domain.Goal) error {
-	m.goals[g.UserID+":"+g.SubjectID] = g
+	m.goals[g.UserID+":"+g.ProjectID] = g
 	return nil
 }
 
@@ -150,26 +150,75 @@ func (m *mockGoalRepository) FindByUserID(_ context.Context, userID string) ([]*
 	return result, nil
 }
 
+type mockNoteRepository struct {
+	notes map[string]*domain.Note
+}
+
+func newMockNoteRepo() *mockNoteRepository {
+	return &mockNoteRepository{notes: make(map[string]*domain.Note)}
+}
+
+func (m *mockNoteRepository) Create(_ context.Context, n *domain.Note) error {
+	m.notes[n.ID] = n
+	return nil
+}
+
+func (m *mockNoteRepository) FindByID(_ context.Context, id string) (*domain.Note, error) {
+	n, ok := m.notes[id]
+	if !ok {
+		return nil, domain.ErrNotFound("note")
+	}
+	return n, nil
+}
+
+func (m *mockNoteRepository) FindByProjectID(_ context.Context, projectID string) ([]*domain.Note, error) {
+	var result []*domain.Note
+	for _, n := range m.notes {
+		if n.ProjectID == projectID {
+			result = append(result, n)
+		}
+	}
+	return result, nil
+}
+
+func (m *mockNoteRepository) Update(_ context.Context, n *domain.Note) error {
+	if _, ok := m.notes[n.ID]; !ok {
+		return domain.ErrNotFound("note")
+	}
+	m.notes[n.ID] = n
+	return nil
+}
+
+func (m *mockNoteRepository) Delete(_ context.Context, id string) error {
+	if _, ok := m.notes[id]; !ok {
+		return domain.ErrNotFound("note")
+	}
+	delete(m.notes, id)
+	return nil
+}
+
 // --- Helpers ---
 
-func setupRouter(t *testing.T) (http.Handler, *mockUserRepository, *mockSubjectRepository, *mockStudyLogRepository, *mockGoalRepository) {
+func setupRouter(t *testing.T) (http.Handler, *mockUserRepository, *mockProjectRepository, *mockStudyLogRepository, *mockGoalRepository) {
 	t.Helper()
 	userRepo := newMockUserRepo()
-	subjectRepo := newMockSubjectRepo()
+	projectRepo := newMockProjectRepo()
 	studyLogRepo := newMockStudyLogRepo()
 	goalRepo := newMockGoalRepo()
+	noteRepo := newMockNoteRepo()
 
 	usecases := &controller.Usecases{
 		User:     usecase.NewUserUsecase(userRepo),
-		Subject:  usecase.NewSubjectUsecase(subjectRepo, userRepo),
-		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, subjectRepo),
-		Goal:     usecase.NewGoalUsecase(goalRepo, userRepo, subjectRepo),
-		Stats:    usecase.NewStatsUsecase(studyLogRepo, goalRepo, subjectRepo),
+		Project:  usecase.NewProjectUsecase(projectRepo, userRepo),
+		StudyLog: usecase.NewStudyLogUsecase(studyLogRepo, userRepo, projectRepo),
+		Goal:     usecase.NewGoalUsecase(goalRepo, userRepo, projectRepo),
+		Stats:    usecase.NewStatsUsecase(studyLogRepo, goalRepo, projectRepo),
+		Note:     usecase.NewNoteUsecase(noteRepo, projectRepo, userRepo),
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	router := controller.NewRouter(usecases, []string{"*"}, logger)
-	return router, userRepo, subjectRepo, studyLogRepo, goalRepo
+	return router, userRepo, projectRepo, studyLogRepo, goalRepo
 }
 
 func jsonRequest(method, path string, body any) *http.Request {
@@ -281,9 +330,9 @@ func TestGetUser_NotFound(t *testing.T) {
 	}
 }
 
-// --- Subject Tests ---
+// --- Project Tests ---
 
-func TestCreateSubject_Success(t *testing.T) {
+func TestCreateProject_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
 	// Create user first
@@ -293,28 +342,28 @@ func TestCreateSubject_Success(t *testing.T) {
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	// Create subject
-	createSubjReq := jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Mathematics"})
-	createSubjRR := doRequest(handler, createSubjReq)
+	// Create project
+	createProjReq := jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Mathematics"})
+	createProjRR := doRequest(handler, createProjReq)
 
-	if createSubjRR.Code != http.StatusCreated {
-		t.Fatalf("expected status %d, got %d; body: %s", http.StatusCreated, createSubjRR.Code, createSubjRR.Body.String())
+	if createProjRR.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusCreated, createProjRR.Code, createProjRR.Body.String())
 	}
 
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	if subj["name"] != "Mathematics" {
-		t.Errorf("expected name 'Mathematics', got '%v'", subj["name"])
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	if proj["name"] != "Mathematics" {
+		t.Errorf("expected name 'Mathematics', got '%v'", proj["name"])
 	}
-	if subj["userId"] != userID {
-		t.Errorf("expected userId '%s', got '%v'", userID, subj["userId"])
+	if proj["userId"] != userID {
+		t.Errorf("expected userId '%s', got '%v'", userID, proj["userId"])
 	}
-	if subj["id"] == nil || subj["id"] == "" {
-		t.Error("expected subject id to be set")
+	if proj["id"] == nil || proj["id"] == "" {
+		t.Error("expected project id to be set")
 	}
 }
 
-func TestListSubjects_Success(t *testing.T) {
+func TestListProjects_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
 	// Create user
@@ -324,41 +373,41 @@ func TestListSubjects_Success(t *testing.T) {
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	// Create two subjects
-	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "English"}))
+	// Create two projects
+	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "English"}))
 
-	// List subjects
-	listReq := jsonRequest("GET", "/v1/users/"+userID+"/subjects", nil)
+	// List projects
+	listReq := jsonRequest("GET", "/v1/users/"+userID+"/projects", nil)
 	listRR := doRequest(handler, listReq)
 
 	if listRR.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, listRR.Code, listRR.Body.String())
 	}
 
-	var subjects []map[string]any
-	parseJSON(t, listRR, &subjects)
-	if len(subjects) != 2 {
-		t.Fatalf("expected 2 subjects, got %d", len(subjects))
+	var projects []map[string]any
+	parseJSON(t, listRR, &projects)
+	if len(projects) != 2 {
+		t.Fatalf("expected 2 projects, got %d", len(projects))
 	}
 }
 
-func TestUpdateSubject_Success(t *testing.T) {
+func TestUpdateProject_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
-	// Update subject
-	updateReq := jsonRequest("PUT", "/v1/subjects/"+subjectID, map[string]string{"name": "Advanced Math"})
+	// Update project
+	updateReq := jsonRequest("PUT", "/v1/projects/"+projectID, map[string]string{"name": "Advanced Math"})
 	updateRR := doRequest(handler, updateReq)
 
 	if updateRR.Code != http.StatusOK {
@@ -372,22 +421,22 @@ func TestUpdateSubject_Success(t *testing.T) {
 	}
 }
 
-func TestDeleteSubject_Success(t *testing.T) {
+func TestDeleteProject_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
-	// Delete subject
-	deleteReq := jsonRequest("DELETE", "/v1/subjects/"+subjectID, nil)
+	// Delete project
+	deleteReq := jsonRequest("DELETE", "/v1/projects/"+projectID, nil)
 	deleteRR := doRequest(handler, deleteReq)
 
 	if deleteRR.Code != http.StatusNoContent {
@@ -395,10 +444,10 @@ func TestDeleteSubject_Success(t *testing.T) {
 	}
 }
 
-func TestListSubjects_UserNotFound(t *testing.T) {
+func TestListProjects_UserNotFound(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	req := jsonRequest("GET", "/v1/users/nonexistent-user/subjects", nil)
+	req := jsonRequest("GET", "/v1/users/nonexistent-user/projects", nil)
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {
@@ -417,16 +466,16 @@ func TestCreateStudyLog_Success(t *testing.T) {
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	// Create subject
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	// Create project
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	// Create study log
 	studiedAt := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	body := map[string]any{
-		"subjectId": subjectID,
+		"projectId": projectID,
 		"studiedAt": studiedAt.Format(time.RFC3339),
 		"minutes":   60,
 		"note":      "Chapter 1",
@@ -443,8 +492,8 @@ func TestCreateStudyLog_Success(t *testing.T) {
 	if logResp["userId"] != userID {
 		t.Errorf("expected userId '%s', got '%v'", userID, logResp["userId"])
 	}
-	if logResp["subjectId"] != subjectID {
-		t.Errorf("expected subjectId '%s', got '%v'", subjectID, logResp["subjectId"])
+	if logResp["projectId"] != projectID {
+		t.Errorf("expected projectId '%s', got '%v'", projectID, logResp["projectId"])
 	}
 	if int(logResp["minutes"].(float64)) != 60 {
 		t.Errorf("expected minutes 60, got %v", logResp["minutes"])
@@ -457,25 +506,25 @@ func TestCreateStudyLog_Success(t *testing.T) {
 func TestListStudyLogs_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	// Create two study logs
 	studiedAt1 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	studiedAt2 := time.Date(2024, 1, 16, 10, 0, 0, 0, time.UTC)
 	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/study-logs", map[string]any{
-		"subjectId": subjectID, "studiedAt": studiedAt1.Format(time.RFC3339), "minutes": 60, "note": "session 1",
+		"projectId": projectID, "studiedAt": studiedAt1.Format(time.RFC3339), "minutes": 60, "note": "session 1",
 	}))
 	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/study-logs", map[string]any{
-		"subjectId": subjectID, "studiedAt": studiedAt2.Format(time.RFC3339), "minutes": 45, "note": "session 2",
+		"projectId": projectID, "studiedAt": studiedAt2.Format(time.RFC3339), "minutes": 45, "note": "session 2",
 	}))
 
 	// List study logs
@@ -496,25 +545,25 @@ func TestListStudyLogs_Success(t *testing.T) {
 func TestListStudyLogs_WithDateFilter(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	// Create logs on different dates
 	jan15 := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	feb10 := time.Date(2024, 2, 10, 10, 0, 0, 0, time.UTC)
 	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/study-logs", map[string]any{
-		"subjectId": subjectID, "studiedAt": jan15.Format(time.RFC3339), "minutes": 60, "note": "january",
+		"projectId": projectID, "studiedAt": jan15.Format(time.RFC3339), "minutes": 60, "note": "january",
 	}))
 	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/study-logs", map[string]any{
-		"subjectId": subjectID, "studiedAt": feb10.Format(time.RFC3339), "minutes": 45, "note": "february",
+		"projectId": projectID, "studiedAt": feb10.Format(time.RFC3339), "minutes": 45, "note": "february",
 	}))
 
 	// Filter to January only
@@ -538,20 +587,20 @@ func TestListStudyLogs_WithDateFilter(t *testing.T) {
 func TestDeleteStudyLog_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user, subject, and study log
+	// Create user, project, and study log
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	studiedAt := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	createLogRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/study-logs", map[string]any{
-		"subjectId": subjectID, "studiedAt": studiedAt.Format(time.RFC3339), "minutes": 60, "note": "to delete",
+		"projectId": projectID, "studiedAt": studiedAt.Format(time.RFC3339), "minutes": 60, "note": "to delete",
 	}))
 	var logResp map[string]any
 	parseJSON(t, createLogRR, &logResp)
@@ -571,23 +620,23 @@ func TestDeleteStudyLog_Success(t *testing.T) {
 func TestUpsertGoal_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	// Upsert goal
 	body := map[string]any{
 		"targetMinutesPerWeek": 300,
 		"startDate":            "2024-01-01",
 	}
-	upsertReq := jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+subjectID, body)
+	upsertReq := jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+projectID, body)
 	upsertRR := doRequest(handler, upsertReq)
 
 	if upsertRR.Code != http.StatusOK {
@@ -599,8 +648,8 @@ func TestUpsertGoal_Success(t *testing.T) {
 	if goalResp["userId"] != userID {
 		t.Errorf("expected userId '%s', got '%v'", userID, goalResp["userId"])
 	}
-	if goalResp["subjectId"] != subjectID {
-		t.Errorf("expected subjectId '%s', got '%v'", subjectID, goalResp["subjectId"])
+	if goalResp["projectId"] != projectID {
+		t.Errorf("expected projectId '%s', got '%v'", projectID, goalResp["projectId"])
 	}
 	if int(goalResp["targetMinutesPerWeek"].(float64)) != 300 {
 		t.Errorf("expected targetMinutesPerWeek 300, got %v", goalResp["targetMinutesPerWeek"])
@@ -616,16 +665,16 @@ func TestUpsertGoal_Success(t *testing.T) {
 func TestUpsertGoal_WithEndDate(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	endDate := "2024-06-30"
 	body := map[string]any{
@@ -633,7 +682,7 @@ func TestUpsertGoal_WithEndDate(t *testing.T) {
 		"startDate":            "2024-01-01",
 		"endDate":              endDate,
 	}
-	upsertReq := jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+subjectID, body)
+	upsertReq := jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+projectID, body)
 	upsertRR := doRequest(handler, upsertReq)
 
 	if upsertRR.Code != http.StatusOK {
@@ -650,27 +699,27 @@ func TestUpsertGoal_WithEndDate(t *testing.T) {
 func TestListGoals_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and two subjects
+	// Create user and two projects
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubj1RR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj1 map[string]any
-	parseJSON(t, createSubj1RR, &subj1)
-	subjectID1 := subj1["id"].(string)
+	createProj1RR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj1 map[string]any
+	parseJSON(t, createProj1RR, &proj1)
+	projectID1 := proj1["id"].(string)
 
-	createSubj2RR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "English"}))
-	var subj2 map[string]any
-	parseJSON(t, createSubj2RR, &subj2)
-	subjectID2 := subj2["id"].(string)
+	createProj2RR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "English"}))
+	var proj2 map[string]any
+	parseJSON(t, createProj2RR, &proj2)
+	projectID2 := proj2["id"].(string)
 
-	// Upsert goals for both subjects
-	doRequest(handler, jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+subjectID1, map[string]any{
+	// Upsert goals for both projects
+	doRequest(handler, jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+projectID1, map[string]any{
 		"targetMinutesPerWeek": 300, "startDate": "2024-01-01",
 	}))
-	doRequest(handler, jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+subjectID2, map[string]any{
+	doRequest(handler, jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+projectID2, map[string]any{
 		"targetMinutesPerWeek": 150, "startDate": "2024-01-01",
 	}))
 
@@ -694,25 +743,25 @@ func TestListGoals_Success(t *testing.T) {
 func TestGetWeeklyStats_Success(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	// Create user and subject
+	// Create user and project
 	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
 	var user map[string]any
 	parseJSON(t, createUserRR, &user)
 	userID := user["id"].(string)
 
-	createSubjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/subjects", map[string]string{"name": "Math"}))
-	var subj map[string]any
-	parseJSON(t, createSubjRR, &subj)
-	subjectID := subj["id"].(string)
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
 
 	// Create a study log within the week
 	studiedAt := time.Date(2024, 1, 2, 10, 0, 0, 0, time.UTC) // Tuesday in the week of 2024-01-01
 	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/study-logs", map[string]any{
-		"subjectId": subjectID, "studiedAt": studiedAt.Format(time.RFC3339), "minutes": 90, "note": "study session",
+		"projectId": projectID, "studiedAt": studiedAt.Format(time.RFC3339), "minutes": 90, "note": "study session",
 	}))
 
 	// Upsert a goal
-	doRequest(handler, jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+subjectID, map[string]any{
+	doRequest(handler, jsonRequest("PUT", "/v1/users/"+userID+"/goals/"+projectID, map[string]any{
 		"targetMinutesPerWeek": 200, "startDate": "2024-01-01",
 	}))
 
@@ -734,17 +783,17 @@ func TestGetWeeklyStats_Success(t *testing.T) {
 		t.Errorf("expected totalMinutes 90, got %v", statsResp["totalMinutes"])
 	}
 
-	subjects, ok := statsResp["subjects"].([]any)
+	projects, ok := statsResp["projects"].([]any)
 	if !ok {
-		t.Fatalf("expected subjects to be a list")
+		t.Fatalf("expected projects to be a list")
 	}
-	if len(subjects) != 1 {
-		t.Fatalf("expected 1 subject, got %d", len(subjects))
+	if len(projects) != 1 {
+		t.Fatalf("expected 1 project, got %d", len(projects))
 	}
 
-	mathStats := subjects[0].(map[string]any)
-	if mathStats["subjectName"] != "Math" {
-		t.Errorf("expected subjectName 'Math', got '%v'", mathStats["subjectName"])
+	mathStats := projects[0].(map[string]any)
+	if mathStats["projectName"] != "Math" {
+		t.Errorf("expected projectName 'Math', got '%v'", mathStats["projectName"])
 	}
 	if int(mathStats["totalMinutes"].(float64)) != 90 {
 		t.Errorf("expected totalMinutes 90 for Math, got %v", mathStats["totalMinutes"])
@@ -797,10 +846,10 @@ func TestGetWeeklyStats_InvalidWeekStartFormat(t *testing.T) {
 
 // --- Additional edge case tests ---
 
-func TestCreateSubject_UserNotFound(t *testing.T) {
+func TestCreateProject_UserNotFound(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	req := jsonRequest("POST", "/v1/users/nonexistent-user/subjects", map[string]string{"name": "Math"})
+	req := jsonRequest("POST", "/v1/users/nonexistent-user/projects", map[string]string{"name": "Math"})
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {
@@ -808,10 +857,10 @@ func TestCreateSubject_UserNotFound(t *testing.T) {
 	}
 }
 
-func TestUpdateSubject_NotFound(t *testing.T) {
+func TestUpdateProject_NotFound(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	req := jsonRequest("PUT", "/v1/subjects/nonexistent-id", map[string]string{"name": "Updated"})
+	req := jsonRequest("PUT", "/v1/projects/nonexistent-id", map[string]string{"name": "Updated"})
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {
@@ -819,10 +868,10 @@ func TestUpdateSubject_NotFound(t *testing.T) {
 	}
 }
 
-func TestDeleteSubject_NotFound(t *testing.T) {
+func TestDeleteProject_NotFound(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
-	req := jsonRequest("DELETE", "/v1/subjects/nonexistent-id", nil)
+	req := jsonRequest("DELETE", "/v1/projects/nonexistent-id", nil)
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {
@@ -848,7 +897,7 @@ func TestUpsertGoal_UserNotFound(t *testing.T) {
 		"targetMinutesPerWeek": 300,
 		"startDate":            "2024-01-01",
 	}
-	req := jsonRequest("PUT", "/v1/users/nonexistent/goals/some-subject", body)
+	req := jsonRequest("PUT", "/v1/users/nonexistent/goals/some-project", body)
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {
@@ -860,6 +909,246 @@ func TestListGoals_UserNotFound(t *testing.T) {
 	handler, _, _, _, _ := setupRouter(t)
 
 	req := jsonRequest("GET", "/v1/users/nonexistent/goals", nil)
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+// --- Note Tests ---
+
+func TestCreateNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user and project
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	// Create note
+	body := map[string]any{
+		"title":   "My Note",
+		"content": "some content",
+		"tags":    []string{"go", "api"},
+	}
+	createNoteReq := jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", body)
+	createNoteRR := doRequest(handler, createNoteReq)
+
+	if createNoteRR.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusCreated, createNoteRR.Code, createNoteRR.Body.String())
+	}
+
+	var noteResp map[string]any
+	parseJSON(t, createNoteRR, &noteResp)
+	if noteResp["title"] != "My Note" {
+		t.Errorf("expected title 'My Note', got '%v'", noteResp["title"])
+	}
+	if noteResp["content"] != "some content" {
+		t.Errorf("expected content 'some content', got '%v'", noteResp["content"])
+	}
+	if noteResp["userId"] != userID {
+		t.Errorf("expected userId '%s', got '%v'", userID, noteResp["userId"])
+	}
+	if noteResp["projectId"] != projectID {
+		t.Errorf("expected projectId '%s', got '%v'", projectID, noteResp["projectId"])
+	}
+	tags, ok := noteResp["tags"].([]any)
+	if !ok || len(tags) != 2 {
+		t.Errorf("expected 2 tags, got %v", noteResp["tags"])
+	}
+}
+
+func TestListNotes_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user and project
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	// Create two notes
+	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "Note 1", "content": "content 1",
+	}))
+	doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "Note 2", "content": "content 2",
+	}))
+
+	// List notes
+	listReq := jsonRequest("GET", "/v1/users/"+userID+"/projects/"+projectID+"/notes", nil)
+	listRR := doRequest(handler, listReq)
+
+	if listRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, listRR.Code, listRR.Body.String())
+	}
+
+	var notes []map[string]any
+	parseJSON(t, listRR, &notes)
+	if len(notes) != 2 {
+		t.Fatalf("expected 2 notes, got %d", len(notes))
+	}
+}
+
+func TestGetNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user, project, and note
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	createNoteRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "My Note", "content": "some content",
+	}))
+	var created map[string]any
+	parseJSON(t, createNoteRR, &created)
+	noteID := created["id"].(string)
+
+	// Get note
+	getReq := jsonRequest("GET", "/v1/notes/"+noteID, nil)
+	getRR := doRequest(handler, getReq)
+
+	if getRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, getRR.Code, getRR.Body.String())
+	}
+
+	var noteResp map[string]any
+	parseJSON(t, getRR, &noteResp)
+	if noteResp["title"] != "My Note" {
+		t.Errorf("expected title 'My Note', got '%v'", noteResp["title"])
+	}
+}
+
+func TestGetNote_NotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	req := jsonRequest("GET", "/v1/notes/nonexistent-id", nil)
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+func TestUpdateNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user, project, and note
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	createNoteRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "Old Title", "content": "old content",
+	}))
+	var created map[string]any
+	parseJSON(t, createNoteRR, &created)
+	noteID := created["id"].(string)
+
+	// Update note
+	updateReq := jsonRequest("PUT", "/v1/notes/"+noteID, map[string]any{
+		"title": "New Title", "content": "new content", "tags": []string{"updated"},
+	})
+	updateRR := doRequest(handler, updateReq)
+
+	if updateRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusOK, updateRR.Code, updateRR.Body.String())
+	}
+
+	var updated map[string]any
+	parseJSON(t, updateRR, &updated)
+	if updated["title"] != "New Title" {
+		t.Errorf("expected title 'New Title', got '%v'", updated["title"])
+	}
+	if updated["content"] != "new content" {
+		t.Errorf("expected content 'new content', got '%v'", updated["content"])
+	}
+}
+
+func TestUpdateNote_NotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	req := jsonRequest("PUT", "/v1/notes/nonexistent-id", map[string]any{
+		"title": "Title", "content": "content",
+	})
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+func TestDeleteNote_Success(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	// Create user, project, and note
+	createUserRR := doRequest(handler, jsonRequest("POST", "/v1/users", map[string]string{"name": "Alice"}))
+	var user map[string]any
+	parseJSON(t, createUserRR, &user)
+	userID := user["id"].(string)
+
+	createProjRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects", map[string]string{"name": "Math"}))
+	var proj map[string]any
+	parseJSON(t, createProjRR, &proj)
+	projectID := proj["id"].(string)
+
+	createNoteRR := doRequest(handler, jsonRequest("POST", "/v1/users/"+userID+"/projects/"+projectID+"/notes", map[string]any{
+		"title": "To Delete", "content": "content",
+	}))
+	var created map[string]any
+	parseJSON(t, createNoteRR, &created)
+	noteID := created["id"].(string)
+
+	// Delete note
+	deleteReq := jsonRequest("DELETE", "/v1/notes/"+noteID, nil)
+	deleteRR := doRequest(handler, deleteReq)
+
+	if deleteRR.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNoContent, deleteRR.Code, deleteRR.Body.String())
+	}
+}
+
+func TestDeleteNote_NotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	req := jsonRequest("DELETE", "/v1/notes/nonexistent-id", nil)
+	rr := doRequest(handler, req)
+
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d; body: %s", http.StatusNotFound, rr.Code, rr.Body.String())
+	}
+}
+
+func TestCreateNote_UserNotFound(t *testing.T) {
+	handler, _, _, _, _ := setupRouter(t)
+
+	body := map[string]any{"title": "Note", "content": "content"}
+	req := jsonRequest("POST", "/v1/users/nonexistent/projects/some-project/notes", body)
 	rr := doRequest(handler, req)
 
 	if rr.Code != http.StatusNotFound {

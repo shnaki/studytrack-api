@@ -1,4 +1,4 @@
-.PHONY: dev build test lint fmt migrate-up migrate-down migrate-create sqlc docker-build
+.PHONY: dev build test lint fmt migrate-up migrate-down migrate-create sqlc docker-build docker-up-hotreload
 
 # Default DB URL for local development
 DB_URL ?= postgres://studytrack:studytrack@localhost:5432/studytrack?sslmode=disable
@@ -38,6 +38,9 @@ sqlc:
 
 docker-build:
 	docker build -t studytrack-api .
+
+docker-up-hotreload:
+	docker compose up --build
 
 docker-up:
 	docker compose up -d

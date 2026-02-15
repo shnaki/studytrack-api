@@ -2,11 +2,11 @@ package domain
 
 import "time"
 
-// StudyLog represents a record of study time for a specific subject.
+// StudyLog represents a record of study time for a specific project.
 type StudyLog struct {
 	ID        string
 	UserID    string
-	SubjectID string
+	ProjectID string
 	StudiedAt time.Time
 	Minutes   int
 	Note      string
@@ -14,12 +14,12 @@ type StudyLog struct {
 }
 
 // NewStudyLog creates a new StudyLog entity.
-func NewStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int, note string) (*StudyLog, error) {
+func NewStudyLog(id, userID, projectID string, studiedAt time.Time, minutes int, note string) (*StudyLog, error) {
 	if userID == "" {
 		return nil, ErrValidation("user ID is required")
 	}
-	if subjectID == "" {
-		return nil, ErrValidation("subject ID is required")
+	if projectID == "" {
+		return nil, ErrValidation("project ID is required")
 	}
 	if err := validateMinutes(minutes); err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func NewStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int,
 	return &StudyLog{
 		ID:        id,
 		UserID:    userID,
-		SubjectID: subjectID,
+		ProjectID: projectID,
 		StudiedAt: studiedAt,
 		Minutes:   minutes,
 		Note:      note,
@@ -36,11 +36,11 @@ func NewStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int,
 }
 
 // ReconstructStudyLog reconstructs a StudyLog entity from existing data.
-func ReconstructStudyLog(id, userID, subjectID string, studiedAt time.Time, minutes int, note string, createdAt time.Time) *StudyLog {
+func ReconstructStudyLog(id, userID, projectID string, studiedAt time.Time, minutes int, note string, createdAt time.Time) *StudyLog {
 	return &StudyLog{
 		ID:        id,
 		UserID:    userID,
-		SubjectID: subjectID,
+		ProjectID: projectID,
 		StudiedAt: studiedAt,
 		Minutes:   minutes,
 		Note:      note,

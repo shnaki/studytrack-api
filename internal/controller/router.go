@@ -18,10 +18,11 @@ import (
 // Usecases holds all application usecases.
 type Usecases struct {
 	User     *usecase.UserUsecase
-	Subject  *usecase.SubjectUsecase
+	Project  *usecase.ProjectUsecase
 	StudyLog *usecase.StudyLogUsecase
 	Goal     *usecase.GoalUsecase
 	Stats    *usecase.StatsUsecase
+	Note     *usecase.NoteUsecase
 }
 
 // NewRouter creates and configures the main HTTP router.
@@ -55,10 +56,11 @@ func NewRouter(usecases *Usecases, corsOrigins []string, logger *slog.Logger) ht
 
 	// Register routes (paths are relative to /v1)
 	RegisterUserRoutes(api, usecases.User)
-	RegisterSubjectRoutes(api, usecases.Subject)
+	RegisterProjectRoutes(api, usecases.Project)
 	RegisterStudyLogRoutes(api, usecases.StudyLog)
 	RegisterGoalRoutes(api, usecases.Goal)
 	RegisterStatsRoutes(api, usecases.Stats)
+	RegisterNoteRoutes(api, usecases.Note)
 
 	return router
 }

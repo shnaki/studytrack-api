@@ -19,7 +19,7 @@ func Load() *Config {
 	return &Config{
 		Port:        getEnv("PORT", "8080"),
 		DBURL:       getEnv("DB_URL", "postgres://studytrack:studytrack@localhost:5432/studytrack?sslmode=disable"),
-		CORSOrigins: strings.Split(getEnv("CORS_ORIGINS", "http://localhost:5173"), ","),
+		CORSOrigins: strings.Split(getEnv("CORS_ORIGINS", "http://localhost:3000"), ","),
 		LogLevel:    getEnv("LOG_LEVEL", "debug"),
 	}
 }

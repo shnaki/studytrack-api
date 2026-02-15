@@ -12,25 +12,25 @@ import (
 func TestGetWeeklyStats(t *testing.T) {
 	weekStart := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC) // Monday
 
-	subjectRepo := newMockSubjectRepository()
-	subjectRepo.subjects["s1"] = &domain.Subject{ID: "s1", UserID: "u1", Name: "Math"}
-	subjectRepo.subjects["s2"] = &domain.Subject{ID: "s2", UserID: "u1", Name: "English"}
+	projectRepo := newMockProjectRepository()
+	projectRepo.projects["s1"] = &domain.Project{ID: "s1", UserID: "u1", Name: "Math"}
+	projectRepo.projects["s2"] = &domain.Project{ID: "s2", UserID: "u1", Name: "English"}
 
 	studyLogRepo := &mockStudyLogRepository{
 		logs: []*domain.StudyLog{
-			{ID: "l1", UserID: "u1", SubjectID: "s1", StudiedAt: weekStart.Add(1 * time.Hour), Minutes: 60},
-			{ID: "l2", UserID: "u1", SubjectID: "s1", StudiedAt: weekStart.Add(25 * time.Hour), Minutes: 90},
-			{ID: "l3", UserID: "u1", SubjectID: "s2", StudiedAt: weekStart.Add(2 * time.Hour), Minutes: 30},
+			{ID: "l1", UserID: "u1", ProjectID: "s1", StudiedAt: weekStart.Add(1 * time.Hour), Minutes: 60},
+			{ID: "l2", UserID: "u1", ProjectID: "s1", StudiedAt: weekStart.Add(25 * time.Hour), Minutes: 90},
+			{ID: "l3", UserID: "u1", ProjectID: "s2", StudiedAt: weekStart.Add(2 * time.Hour), Minutes: 30},
 		},
 	}
 
 	goalRepo := &mockGoalRepository{
 		goals: []*domain.Goal{
-			{ID: "g1", UserID: "u1", SubjectID: "s1", TargetMinutesPerWeek: 200},
+			{ID: "g1", UserID: "u1", ProjectID: "s1", TargetMinutesPerWeek: 200},
 		},
 	}
 
-	uc := usecase.NewStatsUsecase(studyLogRepo, goalRepo, subjectRepo)
+	uc := usecase.NewStatsUsecase(studyLogRepo, goalRepo, projectRepo)
 	stats, err := uc.GetWeeklyStats(context.Background(), "u1", weekStart)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -39,23 +39,23 @@ func TestGetWeeklyStats(t *testing.T) {
 	if stats.TotalMinutes != 180 {
 		t.Errorf("expected total 180, got %d", stats.TotalMinutes)
 	}
-	if len(stats.Subjects) != 2 {
-		t.Fatalf("expected 2 subjects, got %d", len(stats.Subjects))
+	if len(stats.Projects) != 2 {
+		t.Fatalf("expected 2 projects, got %d", len(stats.Projects))
 	}
 
 	// Find Math and English in the results (map iteration order is not guaranteed)
-	var math, english *domain.SubjectWeeklyStats
-	for i := range stats.Subjects {
-		switch stats.Subjects[i].SubjectName {
+	var math, english *domain.ProjectWeeklyStats
+	for i := range stats.Projects {
+		switch stats.Projects[i].ProjectName {
 		case "Math":
-			math = &stats.Subjects[i]
+			math = &stats.Projects[i]
 		case "English":
-			english = &stats.Subjects[i]
+			english = &stats.Projects[i]
 		}
 	}
 
 	if math == nil {
-		t.Fatal("expected Math subject in stats")
+		t.Fatal("expected Math project in stats")
 	} else {
 		if math.TotalMinutes != 150 {
 			t.Errorf("expected 150 minutes for Math, got %d", math.TotalMinutes)
@@ -69,7 +69,7 @@ func TestGetWeeklyStats(t *testing.T) {
 	}
 
 	if english == nil {
-		t.Fatal("expected English subject in stats")
+		t.Fatal("expected English project in stats")
 	} else {
 		if english.TotalMinutes != 30 {
 			t.Errorf("expected 30 minutes for English, got %d", english.TotalMinutes)

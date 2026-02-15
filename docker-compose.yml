@@ -1,4 +1,18 @@
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: postgres://studytrack:studytrack@db:5432/studytrack?sslmode=disable
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:18-alpine
     environment:

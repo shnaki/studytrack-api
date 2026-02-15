@@ -13,14 +13,14 @@ import (
 )
 
 const createStudyLog = `-- name: CreateStudyLog :exec
-INSERT INTO study_logs (id, user_id, subject_id, studied_at, minutes, note, created_at)
+INSERT INTO study_logs (id, user_id, project_id, studied_at, minutes, note, created_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateStudyLogParams struct {
 	ID        pgtype.UUID
 	UserID    pgtype.UUID
-	SubjectID pgtype.UUID
+	ProjectID pgtype.UUID
 	StudiedAt pgtype.Timestamptz
 	Minutes   int32
 	Note      string
@@ -31,7 +31,7 @@ func (q *Queries) CreateStudyLog(ctx context.Context, arg CreateStudyLogParams) 
 	_, err := q.db.Exec(ctx, createStudyLog,
 		arg.ID,
 		arg.UserID,
-		arg.SubjectID,
+		arg.ProjectID,
 		arg.StudiedAt,
 		arg.Minutes,
 		arg.Note,
@@ -49,7 +49,7 @@ func (q *Queries) DeleteStudyLog(ctx context.Context, id pgtype.UUID) (pgconn.Co
 }
 
 const getStudyLogByID = `-- name: GetStudyLogByID :one
-SELECT id, user_id, subject_id, studied_at, minutes, note, created_at
+SELECT id, user_id, project_id, studied_at, minutes, note, created_at
 FROM study_logs
 WHERE id = $1
 `
@@ -60,7 +60,7 @@ func (q *Queries) GetStudyLogByID(ctx context.Context, id pgtype.UUID) (StudyLog
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.SubjectID,
+		&i.ProjectID,
 		&i.StudiedAt,
 		&i.Minutes,
 		&i.Note,

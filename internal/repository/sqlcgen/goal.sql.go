@@ -12,7 +12,7 @@ import (
 )
 
 const listGoalsByUserID = `-- name: ListGoalsByUserID :many
-SELECT id, user_id, subject_id, target_minutes_per_week, start_date, end_date, created_at, updated_at
+SELECT id, user_id, project_id, target_minutes_per_week, start_date, end_date, created_at, updated_at
 FROM goals
 WHERE user_id = $1
 ORDER BY created_at
@@ -30,7 +30,7 @@ func (q *Queries) ListGoalsByUserID(ctx context.Context, userID pgtype.UUID) ([]
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.SubjectID,
+			&i.ProjectID,
 			&i.TargetMinutesPerWeek,
 			&i.StartDate,
 			&i.EndDate,
@@ -48,9 +48,9 @@ func (q *Queries) ListGoalsByUserID(ctx context.Context, userID pgtype.UUID) ([]
 }
 
 const upsertGoal = `-- name: UpsertGoal :exec
-INSERT INTO goals (id, user_id, subject_id, target_minutes_per_week, start_date, end_date, created_at, updated_at)
+INSERT INTO goals (id, user_id, project_id, target_minutes_per_week, start_date, end_date, created_at, updated_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-ON CONFLICT (user_id, subject_id)
+ON CONFLICT (user_id, project_id)
 DO UPDATE SET target_minutes_per_week = EXCLUDED.target_minutes_per_week,
               start_date = EXCLUDED.start_date,
               end_date = EXCLUDED.end_date,
@@ -60,7 +60,7 @@ DO UPDATE SET target_minutes_per_week = EXCLUDED.target_minutes_per_week,
 type UpsertGoalParams struct {
 	ID                   pgtype.UUID
 	UserID               pgtype.UUID
-	SubjectID            pgtype.UUID
+	ProjectID            pgtype.UUID
 	TargetMinutesPerWeek int32
 	StartDate            pgtype.Date
 	EndDate              pgtype.Date
@@ -72,7 +72,7 @@ func (q *Queries) UpsertGoal(ctx context.Context, arg UpsertGoalParams) error {
 	_, err := q.db.Exec(ctx, upsertGoal,
 		arg.ID,
 		arg.UserID,
-		arg.SubjectID,
+		arg.ProjectID,
 		arg.TargetMinutesPerWeek,
 		arg.StartDate,
 		arg.EndDate,

@@ -3,17 +3,20 @@
     "allow": [
       "WebFetch(domain:github.com)",
       "WebSearch",
-      "WebFetch(domain:huma.rocks)",
       "Bash(go mod init:*)",
       "Bash(go mod tidy:*)",
       "Bash(go build:*)",
       "Bash(go test:*)",
       "Bash(go vet:*)",
-      "Bash(find:*)",
       "Bash(go run:*)",
-      "Bash(echo:*)",
       "Bash(go tool cover:*)",
-      "Bash(docker version:*)"
+      "Bash(find:*)",
+      "Bash(echo:*)",
+      "Bash(docker version:*)",
+      "Bash(gh issue view:*)",
+      "Bash(make *)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

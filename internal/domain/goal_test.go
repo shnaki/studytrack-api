@@ -10,7 +10,7 @@ import (
 func TestNewGoal_Valid(t *testing.T) {
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2024, 3, 31, 0, 0, 0, 0, time.UTC)
-	goal, err := domain.NewGoal("goal-1", "user-1", "subject-1", 300, start, &end)
+	goal, err := domain.NewGoal("goal-1", "user-1", "project-1", 300, start, &end)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -21,7 +21,7 @@ func TestNewGoal_Valid(t *testing.T) {
 
 func TestNewGoal_NoEndDate(t *testing.T) {
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	goal, err := domain.NewGoal("goal-1", "user-1", "subject-1", 300, start, nil)
+	goal, err := domain.NewGoal("goal-1", "user-1", "project-1", 300, start, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestNewGoal_NoEndDate(t *testing.T) {
 func TestNewGoal_EndBeforeStart(t *testing.T) {
 	start := time.Date(2024, 3, 1, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	_, err := domain.NewGoal("goal-1", "user-1", "subject-1", 300, start, &end)
+	_, err := domain.NewGoal("goal-1", "user-1", "project-1", 300, start, &end)
 	if err == nil {
 		t.Fatal("expected error for end before start")
 	}
@@ -41,7 +41,7 @@ func TestNewGoal_EndBeforeStart(t *testing.T) {
 
 func TestNewGoal_ZeroTarget(t *testing.T) {
 	start := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	_, err := domain.NewGoal("goal-1", "user-1", "subject-1", 0, start, nil)
+	_, err := domain.NewGoal("goal-1", "user-1", "project-1", 0, start, nil)
 	if err == nil {
 		t.Fatal("expected error for zero target")
 	}
@@ -53,7 +53,7 @@ func TestReconstructGoal(t *testing.T) {
 	createdAt := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
 	updatedAt := time.Date(2024, 3, 15, 14, 0, 0, 0, time.UTC)
 
-	goal := domain.ReconstructGoal("goal-1", "user-1", "subject-1", 300, startDate, &endDate, createdAt, updatedAt)
+	goal := domain.ReconstructGoal("goal-1", "user-1", "project-1", 300, startDate, &endDate, createdAt, updatedAt)
 
 	if goal.ID != "goal-1" {
 		t.Errorf("expected ID 'goal-1', got '%s'", goal.ID)
@@ -61,8 +61,8 @@ func TestReconstructGoal(t *testing.T) {
 	if goal.UserID != "user-1" {
 		t.Errorf("expected UserID 'user-1', got '%s'", goal.UserID)
 	}
-	if goal.SubjectID != "subject-1" {
-		t.Errorf("expected SubjectID 'subject-1', got '%s'", goal.SubjectID)
+	if goal.ProjectID != "project-1" {
+		t.Errorf("expected ProjectID 'project-1', got '%s'", goal.ProjectID)
 	}
 	if goal.TargetMinutesPerWeek != 300 {
 		t.Errorf("expected TargetMinutesPerWeek 300, got %d", goal.TargetMinutesPerWeek)
@@ -89,7 +89,7 @@ func TestReconstructGoal_NilEndDate(t *testing.T) {
 	createdAt := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
 	updatedAt := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)
 
-	goal := domain.ReconstructGoal("goal-1", "user-1", "subject-1", 300, startDate, nil, createdAt, updatedAt)
+	goal := domain.ReconstructGoal("goal-1", "user-1", "project-1", 300, startDate, nil, createdAt, updatedAt)
 
 	if goal.EndDate != nil {
 		t.Error("expected EndDate to be nil")

@@ -26,9 +26,9 @@ func TestDomainError_Error(t *testing.T) {
 }
 
 func TestErrNotFound(t *testing.T) {
-	err := domain.ErrNotFound("subject")
-	if err.Error() != "subject not found" {
-		t.Errorf("expected 'subject not found', got '%s'", err.Error())
+	err := domain.ErrNotFound("project")
+	if err.Error() != "project not found" {
+		t.Errorf("expected 'project not found', got '%s'", err.Error())
 	}
 	if !domain.IsNotFound(err) {
 		t.Error("expected IsNotFound to return true for ErrNotFound")

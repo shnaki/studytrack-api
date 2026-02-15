@@ -15,37 +15,37 @@ import (
 type GoalUsecase struct {
 	goalRepo    port.GoalRepository
 	userRepo    port.UserRepository
-	subjectRepo port.SubjectRepository
+	projectRepo port.ProjectRepository
 }
 
 // NewGoalUsecase creates a new GoalUsecase.
 func NewGoalUsecase(
 	goalRepo port.GoalRepository,
 	userRepo port.UserRepository,
-	subjectRepo port.SubjectRepository,
+	projectRepo port.ProjectRepository,
 ) *GoalUsecase {
 	return &GoalUsecase{
 		goalRepo:    goalRepo,
 		userRepo:    userRepo,
-		subjectRepo: subjectRepo,
+		projectRepo: projectRepo,
 	}
 }
 
-// UpsertGoal creates or updates a goal for a subject.
-func (u *GoalUsecase) UpsertGoal(ctx context.Context, userID, subjectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time) (*domain.Goal, error) {
+// UpsertGoal creates or updates a goal for a project.
+func (u *GoalUsecase) UpsertGoal(ctx context.Context, userID, projectID string, targetMinutesPerWeek int, startDate time.Time, endDate *time.Time) (*domain.Goal, error) {
 	if _, err := u.userRepo.FindByID(ctx, userID); err != nil {
 		return nil, err
 	}
-	subject, err := u.subjectRepo.FindByID(ctx, subjectID)
+	project, err := u.projectRepo.FindByID(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
-	if subject.UserID != userID {
-		return nil, domain.ErrNotFound("subject")
+	if project.UserID != userID {
+		return nil, domain.ErrNotFound("project")
 	}
 
 	id := uuid.New().String()
-	goal, err := domain.NewGoal(id, userID, subjectID, targetMinutesPerWeek, startDate, endDate)
+	goal, err := domain.NewGoal(id, userID, projectID, targetMinutesPerWeek, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}

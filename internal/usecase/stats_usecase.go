@@ -12,19 +12,19 @@ import (
 type StatsUsecase struct {
 	studyLogRepo port.StudyLogRepository
 	goalRepo     port.GoalRepository
-	subjectRepo  port.SubjectRepository
+	projectRepo  port.ProjectRepository
 }
 
 // NewStatsUsecase creates a new StatsUsecase.
 func NewStatsUsecase(
 	studyLogRepo port.StudyLogRepository,
 	goalRepo port.GoalRepository,
-	subjectRepo port.SubjectRepository,
+	projectRepo port.ProjectRepository,
 ) *StatsUsecase {
 	return &StatsUsecase{
 		studyLogRepo: studyLogRepo,
 		goalRepo:     goalRepo,
-		subjectRepo:  subjectRepo,
+		projectRepo:  projectRepo,
 	}
 }
 
@@ -32,7 +32,7 @@ func NewStatsUsecase(
 func (u *StatsUsecase) GetWeeklyStats(ctx context.Context, userID string, weekStart time.Time) (*domain.WeeklyStats, error) {
 	weekEnd := weekStart.AddDate(0, 0, 7)
 
-	subjects, err := u.subjectRepo.FindByUserID(ctx, userID)
+	projects, err := u.projectRepo.FindByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func (u *StatsUsecase) GetWeeklyStats(ctx context.Context, userID string, weekSt
 		return nil, err
 	}
 
-	minutesBySubject := make(map[string]int)
+	minutesByProject := make(map[string]int)
 	for _, log := range logs {
-		minutesBySubject[log.SubjectID] += log.Minutes
+		minutesByProject[log.ProjectID] += log.Minutes
 	}
 
-	goalBySubject := make(map[string]*domain.Goal)
+	goalByProject := make(map[string]*domain.Goal)
 	for _, goal := range goals {
-		goalBySubject[goal.SubjectID] = goal
+		goalByProject[goal.ProjectID] = goal
 	}
 
 	stats := &domain.WeeklyStats{
@@ -66,24 +66,24 @@ func (u *StatsUsecase) GetWeeklyStats(ctx context.Context, userID string, weekSt
 	}
 	var totalMinutes int
 
-	for _, subject := range subjects {
-		minutes := minutesBySubject[subject.ID]
+	for _, project := range projects {
+		minutes := minutesByProject[project.ID]
 		totalMinutes += minutes
 
-		ss := domain.SubjectWeeklyStats{
-			SubjectID:    subject.ID,
-			SubjectName:  subject.Name,
+		ps := domain.ProjectWeeklyStats{
+			ProjectID:    project.ID,
+			ProjectName:  project.Name,
 			TotalMinutes: minutes,
 		}
 
-		if goal, ok := goalBySubject[subject.ID]; ok {
-			ss.TargetMinutesPerWeek = goal.TargetMinutesPerWeek
+		if goal, ok := goalByProject[project.ID]; ok {
+			ps.TargetMinutesPerWeek = goal.TargetMinutesPerWeek
 			if goal.TargetMinutesPerWeek > 0 {
-				ss.AchievementRate = float64(minutes) / float64(goal.TargetMinutesPerWeek) * 100
+				ps.AchievementRate = float64(minutes) / float64(goal.TargetMinutesPerWeek) * 100
 			}
 		}
 
-		stats.Subjects = append(stats.Subjects, ss)
+		stats.Projects = append(stats.Projects, ps)
 	}
 
 	stats.TotalMinutes = totalMinutes

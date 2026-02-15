@@ -24,7 +24,7 @@ func (r *goalRepository) Upsert(ctx context.Context, goal *domain.Goal) error {
 	err := r.q.UpsertGoal(ctx, sqlcgen.UpsertGoalParams{
 		ID:                   toPgUUID(goal.ID),
 		UserID:               toPgUUID(goal.UserID),
-		SubjectID:            toPgUUID(goal.SubjectID),
+		ProjectID:            toPgUUID(goal.ProjectID),
 		TargetMinutesPerWeek: int32(goal.TargetMinutesPerWeek),
 		StartDate:            toPgDate(goal.StartDate),
 		EndDate:              toPgDatePtr(goal.EndDate),
@@ -47,7 +47,7 @@ func (r *goalRepository) FindByUserID(ctx context.Context, userID string) ([]*do
 		goals = append(goals, domain.ReconstructGoal(
 			fromPgUUID(row.ID),
 			fromPgUUID(row.UserID),
-			fromPgUUID(row.SubjectID),
+			fromPgUUID(row.ProjectID),
 			int(row.TargetMinutesPerWeek),
 			row.StartDate.Time,
 			fromPgDatePtr(row.EndDate),

@@ -31,7 +31,7 @@ func (r *studyLogRepository) Create(ctx context.Context, log *domain.StudyLog) e
 	err := r.q.CreateStudyLog(ctx, sqlcgen.CreateStudyLogParams{
 		ID:        toPgUUID(log.ID),
 		UserID:    toPgUUID(log.UserID),
-		SubjectID: toPgUUID(log.SubjectID),
+		ProjectID: toPgUUID(log.ProjectID),
 		StudiedAt: toPgTimestamptz(log.StudiedAt),
 		Minutes:   int32(log.Minutes),
 		Note:      log.Note,
@@ -54,7 +54,7 @@ func (r *studyLogRepository) FindByID(ctx context.Context, id string) (*domain.S
 	return domain.ReconstructStudyLog(
 		fromPgUUID(row.ID),
 		fromPgUUID(row.UserID),
-		fromPgUUID(row.SubjectID),
+		fromPgUUID(row.ProjectID),
 		fromPgTimestamptz(row.StudiedAt),
 		int(row.Minutes),
 		row.Note,
@@ -65,7 +65,7 @@ func (r *studyLogRepository) FindByID(ctx context.Context, id string) (*domain.S
 // FindByUserID uses dynamic SQL for flexible filtering, so it bypasses sqlcgen.
 func (r *studyLogRepository) FindByUserID(ctx context.Context, userID string, filter port.StudyLogFilter) ([]*domain.StudyLog, error) {
 	query := strings.Builder{}
-	query.WriteString(`SELECT id, user_id, subject_id, studied_at, minutes, note, created_at FROM study_logs WHERE user_id = $1`)
+	query.WriteString(`SELECT id, user_id, project_id, studied_at, minutes, note, created_at FROM study_logs WHERE user_id = $1`)
 
 	args := []any{userID}
 	paramIdx := 2
@@ -80,9 +80,9 @@ func (r *studyLogRepository) FindByUserID(ctx context.Context, userID string, fi
 		args = append(args, *filter.To)
 		paramIdx++
 	}
-	if filter.SubjectID != nil {
-		query.WriteString(fmt.Sprintf(` AND subject_id = $%d`, paramIdx))
-		args = append(args, *filter.SubjectID)
+	if filter.ProjectID != nil {
+		query.WriteString(fmt.Sprintf(` AND project_id = $%d`, paramIdx))
+		args = append(args, *filter.ProjectID)
 	}
 
 	query.WriteString(` ORDER BY studied_at DESC`)
@@ -96,10 +96,10 @@ func (r *studyLogRepository) FindByUserID(ctx context.Context, userID string, fi
 	var logs []*domain.StudyLog
 	for rows.Next() {
 		var l domain.StudyLog
-		if err := rows.Scan(&l.ID, &l.UserID, &l.SubjectID, &l.StudiedAt, &l.Minutes, &l.Note, &l.CreatedAt); err != nil {
+		if err := rows.Scan(&l.ID, &l.UserID, &l.ProjectID, &l.StudiedAt, &l.Minutes, &l.Note, &l.CreatedAt); err != nil {
 			return nil, fmt.Errorf("scan study log: %w", err)
 		}
-		logs = append(logs, domain.ReconstructStudyLog(l.ID, l.UserID, l.SubjectID, l.StudiedAt, l.Minutes, l.Note, l.CreatedAt))
+		logs = append(logs, domain.ReconstructStudyLog(l.ID, l.UserID, l.ProjectID, l.StudiedAt, l.Minutes, l.Note, l.CreatedAt))
 	}
 	return logs, rows.Err()
 }
